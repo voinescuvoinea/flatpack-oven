@@ -68,6 +68,7 @@ tests/          pytest
 - `uv run python -m simulation.scenarios` / `-m simulation.sensitivity`: Phase 2 predictions (~3 / ~12 min)
 - `uv run python -m geometry.export` (STEP/SVG/DXF), `-m bom.build_bom` (BOM + cut list), `-m geometry.interfaces`, `-m simulation.as_designed` (~3 min)
 - CAD parameters live in `geometry/oven_b.Params`; regenerate BOM/DXF/interfaces after any change
+- Interactive page: `uv run python -m explorer.sweeps` (~6 min, model runs) then `-m explorer.build` -> `explorer/index.html` (keep it in sync after design changes)
 - `~/.local/bin/uv run python <script>`: run anything in the project env
 - `~/.local/bin/uv add <pkg>==<ver>`: add a dependency. Always pin exactly; `uv.lock` is committed.
 - No system `python3-venv`. The environment is managed by uv in `.venv/`.

@@ -5,3 +5,4 @@ __pycache__/
 build/
 out/
 *.step.tmp
+explorer/out/

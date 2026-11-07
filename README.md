@@ -98,6 +98,18 @@ tests/          pytest suite (51 tests)
 - [uv](https://docs.astral.sh/uv/) to manage the environment. Versions are pinned in `pyproject.toml` and `uv.lock`.
 - About 1.5 GB of disk for CadQuery/OCP and VTK
 
+### Explore it in the browser
+Open **`explorer/index.html`** in any modern browser (no install needed). It is one self-contained file with eight views:
+- 3D model you can rotate, explode by layer, cut in section and click part by part
+- heat-up simulations and how far to trust them (calibration, sensitivity)
+- what-if sliders for insulation, weather and floor temperature
+- brickwork drawings (cross-section and end walls, every cut)
+- materials with their sources, the parts list and budget, requirements and risks
+
+The page is generated from the project data. Rebuild it after any change with
+`uv run python -m explorer.sweeps` (model runs, ~6 min, only when the design or model changes) and
+`uv run python -m explorer.build` (seconds).
+
 ### Install
 ```bash
 git clone <this repository's URL> flatpack-oven

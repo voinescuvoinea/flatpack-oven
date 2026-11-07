@@ -1,0 +1,805 @@
+<!--HEAD-->
+<title>Flat-pack Oven Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: engineering notebook - sticky tab bar, one view at a time, drawing-sheet panels.
+   Accent = fireclay ochre; the heat ramp (cool slate -> amber -> ember) is used only for temperatures. */
+:root {
+  --bg: #eef0f2; --surface: #ffffff; --sunken: #e4e7eb; --ink: #1a1e23; --muted: #5a636e; --line: #cfd4da;
+  --accent: #a8641f; --accent-soft: #f1e3d2; --accent-ink: #7c4712;
+  --heat-cool: #4f7391; --heat-warm: #c99231; --heat-hot: #b8402a;
+  --ok: #2c7a4b; --warn: #a96d12; --bad: #b0352a; --info: #3d6a8f;
+  --viewer: #dfe3e8;
+  --brick: #b9774b; --brick-cut: #cf9a6c; --brick-curve: #e0b98f; --insul: #efe6c8; --insul2: #d9cfa7; --casi: #f4f4ee; --steel: #3b4047; --mortar: #8e8a83;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14171b; --surface: #1c2025; --sunken: #23282e; --ink: #e6e8eb; --muted: #9aa3ad; --line: #30363e;
+  --accent: #d9944a; --accent-soft: #3a2b1c; --accent-ink: #f0bf86;
+  --heat-cool: #7fa4c4; --heat-warm: #e3b45a; --heat-hot: #e0644b;
+  --ok: #5cbc84; --warn: #e0a64a; --bad: #e46b5d; --info: #7fa9cf;
+  --viewer: #20252b;
+  --brick: #b06f45; --brick-cut: #c48d60; --brick-curve: #d6ad84; --insul: #6d6650; --insul2: #5a5543; --casi: #8d8f88; --steel: #a4acb6; --mortar: #77736c;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #14171b; --surface: #1c2025; --sunken: #23282e; --ink: #e6e8eb; --muted: #9aa3ad; --line: #30363e;
+  --accent: #d9944a; --accent-soft: #3a2b1c; --accent-ink: #f0bf86;
+  --heat-cool: #7fa4c4; --heat-warm: #e3b45a; --heat-hot: #e0644b;
+  --ok: #5cbc84; --warn: #e0a64a; --bad: #e46b5d; --info: #7fa9cf;
+  --viewer: #20252b;
+  --brick: #b06f45; --brick-cut: #c48d60; --brick-curve: #d6ad84; --insul: #6d6650; --insul2: #5a5543; --casi: #8d8f88; --steel: #a4acb6; --mortar: #77736c;
+  color-scheme: dark }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+a { color: var(--accent-ink); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; letter-spacing: .01em; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2rem, 4.5vw, 3.1rem); font-weight: 700; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.15rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.mono, .num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.top-inner { max-width: 1240px; margin: 0 auto; display: flex; align-items: center; gap: 20px; min-height: 56px; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 1.35rem; letter-spacing: .02em; white-space: nowrap; display: flex; align-items: center; gap: 10px; }
+.brand svg { flex: none; }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; flex: 1; }
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs a { text-decoration: none; color: var(--muted); font-weight: 500; padding: 16px 12px 14px; border-bottom: 3px solid transparent; white-space: nowrap; font-size: .92rem; }
+nav.tabs a:hover { color: var(--ink); }
+nav.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main { max-width: 1240px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+section.view { display: grid; gap: 28px; }
+.view-head { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--f-mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; min-width: 0; }
+.panel > h3 { margin-bottom: 14px; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 20px; }
+
+.specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.spec { background: var(--surface); padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.spec dt { font-size: .76rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.spec dd { margin: 0; font-family: var(--f-display); font-size: 1.55rem; font-weight: 600; line-height: 1.1; }
+.spec dd small { font-family: var(--f-body); font-size: .8rem; font-weight: 400; color: var(--muted); }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: .76rem; font-weight: 600; letter-spacing: .02em;
+  border: 1px solid currentColor; white-space: nowrap; line-height: 1.5; }
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.c-ok { color: var(--ok); } .c-warn { color: var(--warn); } .c-bad { color: var(--bad); } .c-info { color: var(--info); } .c-muted { color: var(--muted); }
+
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th { text-align: left; font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1px solid var(--line); padding: 8px 10px; }
+td { border-bottom: 1px solid var(--line); padding: 9px 10px; vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+td.num, th.num { text-align: right; }
+td.val { white-space: pre-line; min-width: 9.5em; }
+.table-wrap { overflow-x: auto; }
+
+.phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+.phase { border-top: 4px solid var(--line); padding-top: 10px; display: grid; gap: 4px; }
+.phase.done { border-top-color: var(--accent); }
+.phase.next { border-top-color: var(--accent); border-top-style: dashed; }
+.phase .n { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); }
+.phase b { font-family: var(--f-display); font-size: 1.1rem; font-weight: 600; }
+
+.meter { height: 12px; background: var(--sunken); border-radius: 999px; overflow: hidden; display: flex; }
+.meter span { display: block; height: 100%; background: var(--accent); }
+
+.controls { display: grid; gap: 16px; align-content: start; }
+.control { display: grid; gap: 6px; }
+.control label, .control .lbl { font-weight: 600; font-size: .86rem; display: flex; justify-content: space-between; gap: 8px; }
+.control output { font-family: var(--f-mono); color: var(--accent-ink); font-weight: 500; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.control label.check, .check { display: flex; justify-content: flex-start; align-items: center; gap: 8px; font-size: .9rem; font-weight: 500; cursor: pointer; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid var(--line); flex: none; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; flex-wrap: wrap; }
+.seg button { background: var(--surface); color: var(--ink); border: none; border-right: 1px solid var(--line); padding: 6px 12px; font: inherit; font-size: .85rem; cursor: pointer; }
+.seg button:last-child { border-right: none; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); font-weight: 600; }
+.btn { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); padding: 7px 12px; font: inherit; font-size: .86rem; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+
+.viewer-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .viewer-wrap { grid-template-columns: minmax(0, 1fr); } }
+#viewer { position: relative; aspect-ratio: 4 / 3; max-width: 100%; background: var(--viewer); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+#viewer canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#viewer .hint { position: absolute; left: 12px; bottom: 10px; font-size: .78rem; color: var(--muted); pointer-events: none; }
+#viewer .status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: .9rem; text-align: center; padding: 20px; }
+.part-card { border: 1px dashed var(--line); border-radius: var(--radius); padding: 12px; display: grid; gap: 4px; min-height: 92px; }
+.part-card .pid { font-family: var(--f-mono); color: var(--accent-ink); font-weight: 500; }
+
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; }
+.readout { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 6px; background: var(--surface); }
+.readout .v { font-family: var(--f-display); font-size: 2rem; font-weight: 600; line-height: 1; }
+.readout .chip { white-space: normal; }
+.readout .k { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
+svg.chart text { fill: var(--muted); font-family: var(--f-mono); font-size: 11px; }
+svg.chart .axis { stroke: var(--line); }
+svg.chart .grid { stroke: var(--line); stroke-dasharray: 2 3; }
+svg.chart .title { fill: var(--ink); font-family: var(--f-body); font-size: 12px; font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .82rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+
+.drawing { width: 100%; height: auto; display: block; }
+.drawing text { fill: var(--muted); font-family: var(--f-mono); font-size: 13px; }
+.tooltip { position: fixed; z-index: 20; pointer-events: none; background: var(--ink); color: var(--bg); font-size: .8rem; padding: 6px 9px; border-radius: 4px; font-family: var(--f-mono); max-width: 260px; }
+
+.mat-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .mat-layout { grid-template-columns: minmax(0, 1fr); } }
+.mat-list { display: grid; gap: 4px; }
+.mat-list button { text-align: left; background: transparent; border: 1px solid transparent; border-radius: var(--radius); padding: 8px 10px; font: inherit; color: var(--ink); cursor: pointer; display: grid; gap: 2px; }
+.mat-list button small { color: var(--muted); font-size: .76rem; text-transform: uppercase; letter-spacing: .05em; }
+.mat-list button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; color: var(--muted); font-size: .88rem; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: .9rem; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-family: var(--f-mono); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<!--BODY-->
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <svg width="26" height="20" viewBox="0 0 26 20" aria-hidden="true"><path d="M2 19 V11 A11 9 0 0 1 24 11 V19 Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 19 V15 A4 3.5 0 0 1 17 15 V19" fill="var(--accent)"/></svg>
+      Flat-pack Oven
+    </div>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#overview">Overview</a>
+      <a href="#model">3D model</a>
+      <a href="#heat">Heat</a>
+      <a href="#what-if">What-if</a>
+      <a href="#bricks">Brickwork</a>
+      <a href="#materials">Materials</a>
+      <a href="#parts">Parts &amp; budget</a>
+      <a href="#requirements">Requirements &amp; risks</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ============================== OVERVIEW -->
+  <section class="view" id="v-overview" data-view="overview">
+    <div class="view-head">
+      <span class="eyebrow">Wood-fired · Neapolitan pizza · designed with Claude Code</span>
+      <h1>A brick barrel-vault oven, designed by simulation before the first brick is laid</h1>
+      <p class="muted">Every material value has a source, every solver was checked against known solutions, and the heat model was calibrated on a published Neapolitan oven. The numbers here are predictions until the oven is built and fired.</p>
+      <div class="filters"><span class="chip c-ok">Phase 3 complete</span><span class="chip c-warn">Not built yet</span><span class="chip c-info" id="ov-parts-chip"></span></div>
+    </div>
+    <dl class="specs" id="ov-specs"></dl>
+    <div class="grid-2">
+      <div class="panel"><h3>Predicted performance</h3><div class="table-wrap"><table id="ov-perf"></table></div></div>
+      <div class="panel" style="display:grid; gap:18px; align-content:start">
+        <div><h3>Budget</h3><div id="ov-budget"></div></div>
+        <div><h3>Open risks to watch</h3><div id="ov-risks"></div></div>
+      </div>
+    </div>
+    <div class="panel"><h3>Project phases</h3><div class="phases" id="ov-phases"></div></div>
+  </section>
+
+  <!-- ============================== 3D MODEL -->
+  <section class="view" id="v-model" data-view="model" hidden>
+    <div class="view-head">
+      <span class="eyebrow">Parametric CadQuery model</span>
+      <h2>Take the oven apart</h2>
+      <p class="muted">Drag to orbit, scroll or pinch to zoom, click a part to identify it. Explode the layers, or cut a section front to back to see the vault, the floor build-up and the insulation.</p>
+    </div>
+    <div class="viewer-wrap">
+      <div id="viewer"><div class="status" id="viewer-status">Loading the 3D model…</div><span class="hint">mm-accurate model · 1 grid square = 100 mm</span></div>
+      <div class="panel controls">
+        <div class="control"><span class="lbl">Layers</span><div id="layer-toggles" style="display:grid; gap:6px"></div></div>
+        <div class="control"><label for="explode">Explode <output id="explode-out">0 %</output></label><input id="explode" type="range" min="0" max="100" value="0"></div>
+        <div class="control"><label for="section">Section cut from the front <output id="section-out">off</output></label><input id="section" type="range" min="0" max="100" value="0"></div>
+        <div class="filters"><button class="btn" id="view-reset" type="button">Reset view</button><button class="btn" id="view-front" type="button">Front</button><button class="btn" id="view-side" type="button">Side</button></div>
+        <div class="part-card" id="part-card"><span class="muted small">Click a part to see what it is.</span></div>
+      </div>
+    </div>
+    <div class="panel"><h3>Mass by part family</h3><div class="table-wrap"><table id="mass-table"></table></div></div>
+  </section>
+
+  <!-- ============================== HEAT -->
+  <section class="view" id="v-heat" data-view="heat" hidden>
+    <div class="view-head">
+      <span class="eyebrow">Verified thermal model</span>
+      <h2>How the oven heats up, and how far to trust it</h2>
+      <p class="muted">The model couples layered wall conduction, cavity radiation and an empirical fire. It was calibrated on measurements of a 90 cm Neapolitan oven (Falciano, Masi &amp; Moresi, J. Food Sci. 2022–2023).</p>
+    </div>
+    <div class="panel">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; align-items:center; margin-bottom:12px">
+        <h3 style="margin:0">Heat-up from cold at 10 °C</h3>
+        <div class="seg" id="feed-seg" role="group" aria-label="Wood feed rate"></div>
+      </div>
+      <div id="heatup-chart"></div>
+      <p class="note" id="heatup-note" style="margin-top:12px"></p>
+    </div>
+    <div class="grid-2">
+      <div class="panel"><h3>Calibration against the published oven</h3><div class="table-wrap"><table id="cal-table"></table></div>
+        <div id="rate-chart" style="margin-top:16px"></div></div>
+      <div class="panel"><h3>Where the heat goes at a 450 °C floor</h3><div id="loss-chart"></div>
+        <p class="small muted" style="margin-top:10px">Steady state, as-designed oven, 10 °C still air.</p></div>
+    </div>
+    <div class="panel">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; align-items:center; margin-bottom:12px">
+        <h3 style="margin:0">Which uncertain inputs matter most</h3>
+        <div class="seg" id="sens-seg" role="group" aria-label="Sensitivity output"></div>
+      </div>
+      <div id="sens-chart"></div>
+      <p class="small muted" style="margin-top:10px">One-at-a-time sensitivity across each input's sourced uncertainty band (Phase 2 geometry).</p>
+    </div>
+  </section>
+
+  <!-- ============================== WHAT-IF -->
+  <section class="view" id="v-what-if" data-view="what-if" hidden>
+    <div class="view-head">
+      <span class="eyebrow">Precomputed model runs, interpolated</span>
+      <h2>What if…</h2>
+      <p class="muted">Move the sliders to see how the outer insulation, the weather and the floor temperature you cook at change the oven. Values between the computed points are interpolated.</p>
+    </div>
+    <div class="grid-2">
+      <div class="panel controls">
+        <div class="control"><label for="wi-rw">Rock-wool layer thickness <output id="wi-rw-out"></output></label><input id="wi-rw" type="range" min="50" max="150" step="5" value="100"></div>
+        <div class="control"><label for="wi-ta">Outdoor temperature <output id="wi-ta-out"></output></label><input id="wi-ta" type="range" min="-5" max="40" step="1" value="10"></div>
+        <div class="control"><label for="wi-set">Floor temperature to hold <output id="wi-set-out"></output></label><input id="wi-set" type="range" min="400" max="480" step="5" value="450"></div>
+        <p class="small muted">Superwool stays at 50 mm. The floor setting runs at 10 °C outdoors with 100 mm rock wool.</p>
+      </div>
+      <div class="readouts" id="wi-readouts"></div>
+    </div>
+    <div class="panel"><h3>Outer shell temperature against insulation</h3><div id="wi-chart"></div></div>
+  </section>
+
+  <!-- ============================== BRICKWORK -->
+  <section class="view" id="v-bricks" data-view="bricks" hidden>
+    <div class="view-head">
+      <span class="eyebrow">Generated from the CAD parameters</span>
+      <h2>Brickwork and structure</h2>
+      <p class="muted">The cross-section shows every layer from the concrete base to the shell. The end-wall elevations show each brick and each cut. Hover a brick for its size.</p>
+    </div>
+    <div class="panel"><h3>Cross-section at mid-depth</h3><div id="xsec"></div><div class="legend" id="xsec-legend" style="margin-top:10px"></div></div>
+    <div class="grid-2">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px"><h3 style="margin:0">End wall elevation</h3>
+          <div class="seg" id="wall-seg" role="group" aria-label="End wall"><button type="button" data-w="back" aria-pressed="true">Back</button><button type="button" data-w="front" aria-pressed="false">Front</button></div></div>
+        <div id="elev"></div>
+        <div class="legend" style="margin-top:10px"><span><span class="swatch" style="background:var(--brick)"></span>full brick</span><span><span class="swatch" style="background:var(--brick-cut)"></span>straight cut</span><span><span class="swatch" style="background:var(--brick-curve)"></span>cut to the curve</span><span><span class="swatch" style="background:var(--mortar)"></span>door-arch half bricks</span></div>
+      </div>
+      <div class="panel" style="display:grid; gap:18px; align-content:start">
+        <div><h3>Arch stability</h3><dl class="kv" id="statics"></dl></div>
+        <div><h3>Bricks by position</h3><div class="table-wrap"><table id="brick-count"></table></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== MATERIALS -->
+  <section class="view" id="v-materials" data-view="materials" hidden>
+    <div class="view-head">
+      <span class="eyebrow">materials.yaml · every value sourced</span>
+      <h2>Materials database</h2>
+      <p class="muted">DATASHEET = the product's own data. REFERENCE = handbook or published study. ASSUMPTION = a reasoned proxy with a wide band, to be replaced by measurement.</p>
+    </div>
+    <div class="mat-layout">
+      <div class="panel mat-list" id="mat-list" role="group" aria-label="Materials"></div>
+      <div class="panel" id="mat-detail" style="display:grid; gap:16px"></div>
+    </div>
+  </section>
+
+  <!-- ============================== PARTS -->
+  <section class="view" id="v-parts" data-view="parts" hidden>
+    <div class="view-head">
+      <span class="eyebrow">bom.md · generated from the CAD model</span>
+      <h2>Parts list and budget</h2>
+      <p class="muted">Quantities come from the model's volumes and the course tables. Prices appear only where a dated supplier price exists. Everything else waits for a quote and is never guessed.</p>
+    </div>
+    <div class="panel" id="bom-budget"></div>
+    <div class="panel"><div class="filters" id="bom-filters" style="margin-bottom:12px"></div><div class="table-wrap"><table id="bom-table"></table></div></div>
+  </section>
+
+  <!-- ============================== REQUIREMENTS -->
+  <section class="view" id="v-requirements" data-view="requirements" hidden>
+    <div class="view-head">
+      <span class="eyebrow">requirements.yaml · risks.md</span>
+      <h2>Requirements and risks</h2>
+    </div>
+    <div class="panel"><div class="filters" id="req-filters" style="margin-bottom:12px"></div><div class="table-wrap"><table id="req-table"></table></div></div>
+    <div class="panel"><h3>Risks and unknowns</h3><div class="filters" id="risk-filters" style="margin-bottom:12px"></div><div class="table-wrap"><table id="risk-table"></table></div></div>
+    <div class="panel"><h3>Decision log</h3><ul id="decisions" style="margin:0; padding-left:18px; display:grid; gap:4px"></ul></div>
+  </section>
+</main>
+<div class="tooltip" id="tip" hidden></div>
+
+<script type="application/json" id="oven-data">__DATA_JSON__</script>
+<script type="text/plain" id="oven-glb">__GLB_B64__</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+
+<script>
+(() => {
+const D = JSON.parse(document.getElementById("oven-data").textContent);
+window.OVEN = D;
+const $ = (s, r = document) => r.querySelector(s);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function h(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v; else if (k === "html") e.innerHTML = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null) e.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return e;
+}
+const fmt = (v, d = 0) => v == null || Number.isNaN(v) ? "–" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const chip = (text, cls) => h("span", { class: "chip " + cls }, text);
+const statusCls = s => ({ confirmed: "c-ok", proposed: "c-warn", open: "c-bad", closed: "c-ok", mitigated: "c-info", accepted: "c-muted" }[s] || "c-muted");
+const SVGNS = "http://www.w3.org/2000/svg";
+function s(tag, attrs = {}, ...kids) { const e = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) if (v != null) e.setAttribute(k, v); for (const k of kids.flat()) if (k != null) e.append(k instanceof Node ? k : document.createTextNode(String(k))); return e; }
+const tip = $("#tip");
+function showTip(ev, text) { tip.textContent = text; tip.hidden = false; const x = Math.min(ev.clientX + 14, innerWidth - 270); tip.style.left = x + "px"; tip.style.top = (ev.clientY + 14) + "px"; }
+function hideTip() { tip.hidden = true; }
+
+// ---------------------------------------------------------------- charts
+function niceTicks(lo, hi, n = 5) {
+  const span = hi - lo, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(st => span / st <= n) || mag * 10;
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10)); return out;
+}
+function lineChart(host, o) {
+  const W = o.width || 760, H = o.height || 300, m = { l: 52, r: 18, t: 14, b: 40 };
+  const [x0, x1] = o.x, [y0, y1] = o.y;
+  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r), Y = v => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart", role: "img", "aria-label": o.label || "chart" });
+  for (const b of o.bands || []) svg.append(s("rect", { x: m.l, width: W - m.l - m.r, y: Y(b.y1), height: Y(b.y0) - Y(b.y1), fill: b.color, opacity: .16 }),
+    s("text", { x: W - m.r - 4, y: Y(b.y1) + 13, "text-anchor": "end", style: `fill:${b.color}` }, b.label));
+  for (const t of niceTicks(y0, y1)) svg.append(s("line", { class: "grid", x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t) }), s("text", { x: m.l - 8, y: Y(t) + 4, "text-anchor": "end" }, fmt(t, t % 1 ? 1 : 0)));
+  for (const t of niceTicks(x0, x1, o.xTicks || 6)) svg.append(s("line", { class: "axis", x1: X(t), x2: X(t), y1: H - m.b, y2: H - m.b + 5 }), s("text", { x: X(t), y: H - m.b + 18, "text-anchor": "middle" }, fmt(t, t % 1 ? 1 : 0)));
+  svg.append(s("line", { class: "axis", x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b }), s("line", { class: "axis", x1: m.l, x2: m.l, y1: m.t, y2: H - m.b }));
+  if (o.xLabel) svg.append(s("text", { x: (m.l + W - m.r) / 2, y: H - 6, "text-anchor": "middle" }, o.xLabel));
+  if (o.yLabel) svg.append(s("text", { x: 14, y: (m.t + H - m.b) / 2, transform: `rotate(-90 14 ${(m.t + H - m.b) / 2})`, "text-anchor": "middle" }, o.yLabel));
+  for (const hl of o.hlines || []) svg.append(s("line", { x1: m.l, x2: W - m.r, y1: Y(hl.y), y2: Y(hl.y), stroke: hl.color, "stroke-width": 1.5, "stroke-dasharray": "6 4" }),
+    s("text", { x: m.l + 6, y: Y(hl.y) - 6, style: `fill:${hl.color}` }, hl.label));
+  for (const se of o.series) {
+    if (se.band) { const top = se.band.map(p => [X(p[0]), Y(p[2])]), bot = se.band.map(p => [X(p[0]), Y(p[1])]).reverse();
+      svg.append(s("path", { d: "M" + top.concat(bot).map(p => p.join(",")).join("L") + "Z", fill: se.color, opacity: .15 })); }
+    if (se.points.length > 1) svg.append(s("path", { d: "M" + se.points.map(p => X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join("L"), fill: "none", stroke: se.color, "stroke-width": se.width || 2.2, "stroke-dasharray": se.dash || null, "stroke-linejoin": "round" }));
+    for (const p of se.dots ? se.points : []) svg.append(s("circle", { cx: X(p[0]), cy: Y(p[1]), r: 3.5, fill: se.color }));
+    if (se.end) { const p = se.points[se.points.length - 1]; svg.append(s("circle", { cx: X(p[0]), cy: Y(p[1]), r: 4.5, fill: se.color })); }
+  }
+  for (const mk of o.markers || []) svg.append(s("circle", { cx: X(mk.x), cy: Y(mk.y), r: 6, fill: "none", stroke: mk.color, "stroke-width": 2 }), s("text", { x: X(mk.x) + 9, y: Y(mk.y) - 8, style: `fill:${mk.color}` }, mk.label));
+  host.replaceChildren(svg);
+  if (o.legend) host.append(h("div", { class: "legend", style: "margin-top:8px" }, o.legend.map(l => h("span", {}, h("i", { style: `background:${l.color}` }), l.label))));
+}
+
+// ---------------------------------------------------------------- routing
+const views = [...document.querySelectorAll("section.view")];
+const renderers = {}; const rendered = new Set();
+function route() {
+  const name = (location.hash || "#overview").slice(1);
+  const v = views.find(x => x.dataset.view === name) || views[0];
+  views.forEach(x => x.hidden = x !== v);
+  document.querySelectorAll("nav.tabs a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#" + v.dataset.view ? "page" : "false"));
+  if (!rendered.has(v.dataset.view) && renderers[v.dataset.view]) { renderers[v.dataset.view](); rendered.add(v.dataset.view); }
+  window.dispatchEvent(new CustomEvent("oven-view", { detail: v.dataset.view }));
+}
+addEventListener("hashchange", () => { route(); scrollTo({ top: 0 }); });
+// re-render charts when the theme flips so SVG colors follow tokens
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { rendered.clear(); route(); });
+
+// ---------------------------------------------------------------- data helpers
+const AD = D.as_designed || {};
+const st10 = AD["steady_+10C"] || {}, st40 = AD["steady_+40C"] || {};
+const S = D.summary, G = D.geometry;
+
+// ---------------------------------------------------------------- OVERVIEW
+renderers.overview = () => {
+  $("#ov-parts-chip").textContent = `${S.n_parts} numbered parts`;
+  const specs = [["Cooking floor", `${fmt(S.floor_field_mm[0])} × ${fmt(S.floor_field_mm[1])}`, "mm"], ["Crown above floor", fmt(S.crown_above_floor_mm), "mm"],
+    ["Door", `${fmt(G.door_w)} × ${fmt(G.door_h)}`, "mm, arched"], ["Vault", `${G.arch_courses} × ${fmt(G.bT)}`, "courses × mm brick"],
+    ["Mass", fmt(S.mass_kg), "kg (bricks " + fmt(S.brick_mass_kg) + ")"], ["Shell size", `${fmt(S.outer_width_mm / 1000, 2)} × ${fmt(S.outer_depth_mm / 1000, 2)}`, "m, plus frame and hood"]];
+  $("#ov-specs").replaceChildren(...specs.map(([k, v, u]) => h("div", { class: "spec" }, h("dt", {}, k), h("dd", {}, v, " ", h("small", {}, u)))));
+  const hu = (AD["heatup_9kgh_+10C"] || {}).t_min;
+  const rows = [
+    ["Wood to hold a 450 °C floor", `${fmt(st10.feed_kg_h, 1)} kg/h`, "informative", chip("model", "c-info")],
+    ["Vault at that point", `${fmt(st10.T_vault_C)} °C`, "design 550 °C", chip("ok", "c-ok")],
+    ["Shell on a 40 °C day (long session)", `${fmt(st40.T_shell_C, 1)} °C`, "≤ 60 °C (R-S1)", chip(st40.T_shell_C <= 60 ? "meets" : "fails", st40.T_shell_C <= 60 ? "c-ok" : "c-bad")],
+    ["Heat-up to 430 °C at 9 kg/h", `≤ ${fmt(hu)} min`, "≤ 90 min (R-P2)", chip("verify at first firing", "c-warn")],
+    ["Arch geometric safety factor", fmt(D.statics.safety_factor, 1), "≥ 2–3 usual", chip("comfortable", "c-ok")],
+    ["Concrete top, 40 °C day, long session", `${fmt(st40.T_concrete_top_C)} °C`, "≤ 100 °C (assumed)", chip(st40.T_concrete_top_C <= 100 ? "meets" : "measure", st40.T_concrete_top_C <= 100 ? "c-ok" : "c-warn")],
+  ];
+  $("#ov-perf").replaceChildren(h("tr", {}, h("th", {}, "Quantity"), h("th", { class: "num" }, "Prediction"), h("th", {}, "Target"), h("th", {}, "")),
+    ...rows.map(r => h("tr", {}, h("td", {}, r[0]), h("td", { class: "num mono" }, r[1]), h("td", { class: "muted small" }, r[2]), h("td", {}, r[3]))));
+  const b = D.bom, q = b.rows.filter(r => r.cost_usd === "QUOTE").length, pct = Math.min(100, b.priced_usd / b.budget_usd * 100);
+  $("#ov-budget").replaceChildren(h("div", { style: "display:flex; justify-content:space-between; margin-bottom:6px" }, h("span", { class: "mono" }, `$${fmt(b.priced_usd)} priced`), h("span", { class: "muted mono" }, `of ~$${fmt(b.budget_usd)}`)),
+    h("div", { class: "meter", role: "img", "aria-label": `${fmt(pct)} % of budget priced` }, h("span", { style: `width:${pct}%` })), h("p", { class: "small muted", style: "margin-top:6px" }, `${q} lines still need supplier quotes.`));
+  const open = D.risks.filter(r => r.status === "open");
+  $("#ov-risks").replaceChildren(h("p", { class: "small muted", style: "margin-bottom:8px" }, `${open.length} open of ${D.risks.length}.`),
+    h("div", { style: "display:grid; gap:8px" }, ["K-24", "K-28", "K-32", "K-14"].map(id => D.risks.find(r => r.id === id)).filter(Boolean)
+      .map(r => h("div", { style: "display:grid; grid-template-columns:auto 1fr; gap:10px" }, h("span", { class: "mono small", style: "color:var(--accent-ink)" }, r.id), h("span", { class: "small" }, r.risk)))));
+  $("#ov-phases").replaceChildren(...D.phases.map(p => h("div", { class: "phase " + p.status }, h("span", { class: "n" }, `PHASE ${p.n} · ${p.status.toUpperCase()}`), h("b", {}, p.name), h("span", { class: "small muted" }, p.what))));
+};
+
+// ---------------------------------------------------------------- MODEL (non-3D parts of the view)
+renderers.model = () => {
+  const fm = Object.entries(D.family_mass).sort((a, b) => b[1] - a[1]);
+  $("#mass-table").replaceChildren(h("tr", {}, h("th", {}, "Family"), h("th", { class: "num" }, "Parts"), h("th", { class: "num" }, "kg")),
+    ...fm.map(([f, kg]) => h("tr", {}, h("td", {}, f), h("td", { class: "num mono" }, D.parts.filter(p => p.family === f).length), h("td", { class: "num mono" }, fmt(kg, 1)))),
+    h("tr", {}, h("td", {}, h("b", {}, "Total")), h("td", { class: "num mono" }, D.parts.length), h("td", { class: "num mono" }, h("b", {}, fmt(S.mass_kg)))));
+};
+window.addEventListener("part-select", e => {
+  const p = D.parts.find(x => x.id === e.detail); const card = $("#part-card");
+  if (!p) { card.replaceChildren(h("span", { class: "muted small" }, "Click a part to see what it is.")); return; }
+  const mat = D.materials.find(m => m.id === p.material);
+  card.replaceChildren(h("span", { class: "pid" }, p.id), h("b", {}, p.name), h("span", { class: "small muted" }, `${p.family} · ${mat ? mat.name.split(",")[0] : p.material}`),
+    h("span", { class: "mono small" }, `${fmt(p.mass_kg, p.mass_kg < 10 ? 2 : 1)} kg${p.note ? " · " + p.note : ""}`));
+});
+
+// ---------------------------------------------------------------- HEAT
+renderers.heat = () => {
+  const sw = D.sweeps;
+  const seg = $("#feed-seg");
+  if (!sw) { $("#heatup-chart").textContent = "Sweeps not computed (run explorer.sweeps)."; }
+  else {
+    const draw = feed => {
+      const run = sw.heatup.find(r => r.feed_kg_h === feed);
+      [...seg.children].forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.f === feed)));
+      const tmax = Math.max(...sw.heatup.map(r => r.t_min)) * 1.05;
+      lineChart($("#heatup-chart"), { x: [0, tmax], y: [0, 650], xLabel: "minutes from lighting", yLabel: "surface temperature, °C", label: "heat-up curve",
+        bands: [{ y0: 400, y1: 480, color: css("--heat-warm"), label: "R-P1 floor band 400–480 °C" }],
+        hlines: [{ y: 430, color: css("--muted"), label: "ready: floor 430 °C" }],
+        series: [{ points: run.curve.map(p => [p.t_min, p.vault]), color: css("--heat-hot"), end: true }, { points: run.curve.map(p => [p.t_min, p.floor]), color: css("--heat-cool"), end: true }],
+        legend: [{ color: css("--heat-hot"), label: "vault (dome) surface" }, { color: css("--heat-cool"), label: "cooking floor surface" }] });
+      $("#heatup-note").textContent = `${feed} kg/h of dry hardwood: the floor reaches 430 °C after ${fmt(run.t_min)} min using ${fmt(run.wood_kg, 1)} kg of wood. ` +
+        "The model under-predicts early heating about 2× against the published oven (risk K-24), so treat this as the slowest likely case. Lighting the fire in the middle of the floor first, as cooks do, is not modelled and also speeds things up.";
+    };
+    seg.replaceChildren(...sw.heatup.map(r => h("button", { type: "button", "data-f": r.feed_kg_h, "aria-pressed": "false", onclick: () => draw(r.feed_kg_h) }, `${r.feed_kg_h} kg/h`)));
+    draw(sw.heatup.find(r => r.feed_kg_h === 8) ? 8 : sw.heatup[0].feed_kg_h);
+  }
+  const c = D.calibration;
+  if (c) {
+    const T = c.targets, F = c.fit;
+    const pct = k => k.includes("frac");
+    const rows = Object.keys(T).map(k => { const [v, sd] = T[k], m = F[k], z = (m - v) / sd;
+      const lab = { T_floor_C: "Floor, steady 3 kg/h", T_vault_C: "Vault, steady 3 kg/h", flue_frac: "Flue-gas loss", walls_frac: "Wall loss" }[k];
+      const f = x => pct(k) ? fmt(x * 100) + " %" : fmt(x) + " °C";
+      return h("tr", {}, h("td", {}, lab), h("td", { class: "num mono" }, f(v) + " ± " + (pct(k) ? fmt(sd * 100) + " %" : fmt(sd))), h("td", { class: "num mono" }, f(m)), h("td", {}, chip(`${z >= 0 ? "+" : ""}${fmt(z, 1)} σ`, Math.abs(z) <= 1.5 ? "c-ok" : "c-warn"))); });
+    $("#cal-table").replaceChildren(h("tr", {}, h("th", {}, "Quantity"), h("th", { class: "num" }, "Measured"), h("th", { class: "num" }, "Model"), h("th", {}, "")), ...rows);
+    const vr = Object.entries(c.validation_heating_rate).map(([q, v]) => [+q, v]);
+    lineChart($("#rate-chart"), { x: [2, 10], y: [0, 500], xTicks: 4, width: 520, height: 300, xLabel: "wood feed, kg/h", yLabel: "°C per hour", label: "initial floor heating rate",
+      series: [{ points: vr.map(([q, v]) => [q, v.measured_C_per_h]), color: css("--ink"), dots: true, width: 1.5 }, { points: vr.map(([q, v]) => [q, v.model_C_per_h]), color: css("--accent"), dots: true }],
+      legend: [{ color: css("--ink"), label: "measured initial floor heating rate" }, { color: css("--accent"), label: "model (4.5 and 6 kg/h held out)" }] });
+  }
+  if (st10.Q_fire_W) {
+    const parts = [["Flue gas through the mouth", st10.Q_flue_W, "--heat-warm"], ["Radiation out of the door", st10.Q_door_rad_W, "--heat-hot"], ["Walls and floor", st10.Q_walls_W, "--heat-cool"]];
+    const tot = st10.Q_fire_W;
+    $("#loss-chart").replaceChildren(
+      h("div", { class: "meter", style: "height:26px; border-radius:4px", role: "img", "aria-label": "heat loss split" }, parts.map(([l, q, c]) => h("span", { style: `width:${q / tot * 100}%; background:var(${c}); border-right:2px solid var(--surface)` }))),
+      h("div", { style: "display:grid; gap:8px; margin-top:14px" }, parts.map(([l, q, c]) => h("div", { style: "display:grid; grid-template-columns:auto 1fr auto auto; gap:10px; align-items:center" },
+        h("span", { class: "swatch", style: `background:var(${c})` }), h("span", {}, l), h("span", { class: "mono" }, fmt(q / 1000, 1) + " kW"), h("b", { class: "mono" }, fmt(q / tot * 100) + " %")))),
+      h("p", { class: "small muted", style: "margin-top:10px" }, `Fire output ${fmt(tot / 1000, 1)} kW from ${fmt(st10.feed_kg_h, 2)} kg/h of wood. The 52 cm door a 45 cm pizza needs is the biggest loss you can design for.`));
+  }
+  const sens = D.sensitivity;
+  if (sens) {
+    const outs = [["wood_kg_h", "Wood to hold 450 °C (kg/h)", 2], ["heatup_min", "Heat-up at 6 kg/h (min)", 0], ["shell_C", "Shell at 40 °C ambient (°C)", 1]];
+    const sseg = $("#sens-seg");
+    const label = { brick_k: "Brick conductivity", brick_rho: "Brick density", brick_cp: "Brick specific heat", eps_brick: "Brick emissivity", sw_k: "Superwool conductivity",
+      casi_k: "CaSi conductivity", conc_k: "Concrete conductivity", eps_shell: "Shell paint emissivity", chi_r: "Fire radiant fraction", excess_air: "Excess air", h_in_W_m2K: "Gas-to-wall convection", tau_burn_s: "Log burn time" };
+    const draw = key => {
+      const [k, title, dg] = outs.find(o => o[0] === key); [...sseg.children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k)));
+      const base = sens.base[k]; const rows = sens.rows.map(r => ({ p: label[r.param] || r.param, lo: r[k + "_low"], hi: r[k + "_high"] }))
+        .map(r => ({ ...r, span: Math.abs(r.hi - r.lo) })).sort((a, b) => b.span - a.span);
+      const W = 760, rowH = 26, m = { l: 190, r: 70 }, Hh = rows.length * rowH + 40;
+      const vals = rows.flatMap(r => [r.lo, r.hi]).concat(base); const lo = Math.min(...vals), hi = Math.max(...vals), pad = (hi - lo) * .08 || 1;
+      const X = v => m.l + (v - (lo - pad)) / ((hi + pad) - (lo - pad)) * (W - m.l - m.r);
+      const svg = s("svg", { viewBox: `0 0 ${W} ${Hh}`, class: "chart", role: "img", "aria-label": "sensitivity tornado chart" });
+      rows.forEach((r, i) => { const y = 10 + i * rowH; svg.append(s("text", { x: m.l - 10, y: y + 15, "text-anchor": "end" }, r.p));
+        const a = Math.min(r.lo, r.hi), b = Math.max(r.lo, r.hi);
+        svg.append(s("rect", { x: X(a), y: y + 3, width: Math.max(X(b) - X(a), 1.5), height: rowH - 8, fill: css("--accent"), opacity: .85, rx: 2 }));
+        svg.append(s("text", { x: X(b) + 6, y: y + 15 }, `${fmt(a, dg)}–${fmt(b, dg)}`)); });
+      svg.append(s("line", { x1: X(base), x2: X(base), y1: 4, y2: Hh - 26, stroke: css("--ink"), "stroke-width": 1.5 }), s("text", { x: X(base), y: Hh - 10, "text-anchor": "middle", class: "title" }, `base ${fmt(base, dg)}`));
+      $("#sens-chart").replaceChildren(svg);
+    };
+    sseg.replaceChildren(...outs.map(([k, t]) => h("button", { type: "button", "data-k": k, "aria-pressed": "false", onclick: () => draw(k) }, t.split(" (")[0])));
+    draw("wood_kg_h");
+  }
+};
+
+// ---------------------------------------------------------------- WHAT-IF
+renderers["what-if"] = () => {
+  const sw = D.sweeps; if (!sw) { $("#wi-readouts").textContent = "Sweeps not computed."; return; }
+  const RW = [...new Set(sw.insulation.map(r => r.rw_mm))].sort((a, b) => a - b), TA = [...new Set(sw.insulation.map(r => r.T_amb_C))].sort((a, b) => a - b);
+  const grid = (rw, ta, key) => sw.insulation.find(r => r.rw_mm === rw && r.T_amb_C === ta)[key];
+  const bracket = (arr, v) => { let i = Math.max(0, Math.min(arr.length - 2, arr.findIndex((x, j) => v <= arr[j + 1]))); if (i < 0) i = arr.length - 2; const t = (v - arr[i]) / (arr[i + 1] - arr[i]); return [i, Math.max(0, Math.min(1, t))]; };
+  const bilin = (rw, ta, key) => { const [i, u] = bracket(RW, rw), [j, w] = bracket(TA, ta);
+    const a = grid(RW[i], TA[j], key), b = grid(RW[i + 1], TA[j], key), c = grid(RW[i], TA[j + 1], key), d = grid(RW[i + 1], TA[j + 1], key);
+    return (1 - u) * (1 - w) * a + u * (1 - w) * b + (1 - u) * w * c + u * w * d; };
+  const SP = sw.setpoint.slice().sort((a, b) => a.T_set_C - b.T_set_C);
+  const lin = (T, key) => { const xs = SP.map(r => r.T_set_C); const [i, t] = bracket(xs, T); return SP[i][key] * (1 - t) + SP[i + 1][key] * t; };
+  const update = () => {
+    const rw = +$("#wi-rw").value, ta = +$("#wi-ta").value, set = +$("#wi-set").value;
+    $("#wi-rw-out").textContent = `${rw} mm`; $("#wi-ta-out").textContent = `${ta} °C`; $("#wi-set-out").textContent = `${set} °C`;
+    const shell = bilin(rw, ta, "T_shell_C"), conc = bilin(rw, ta, "T_concrete_top_C"), feed = bilin(rw, ta, "feed_kg_h");
+    const feedSet = lin(set, "feed_kg_h"), vaultSet = lin(set, "T_vault_C");
+    const card = (k, v, sub, cls) => h("div", { class: "readout" }, h("span", { class: "k" }, k), h("span", { class: "v" }, v), sub ? h("span", {}, sub) : null, cls ? cls : null);
+    $("#wi-readouts").replaceChildren(
+      card("Shell surface", `${fmt(shell, 1)} °C`, chip(shell <= 60 ? "within 60 °C target" : "over 60 °C target", shell <= 60 ? "c-ok" : "c-bad")),
+      card("Concrete top", `${fmt(conc)} °C`, chip(conc <= 100 ? "under 100 °C (assumed limit)" : "over 100 °C (assumed limit)", conc <= 100 ? "c-ok" : "c-warn")),
+      card("Wood to hold 450 °C", `${fmt(feed, 2)} kg/h`, h("span", { class: "small muted" }, `≈ ${fmt(feed * 3, 1)} kg for a 3-hour session`)),
+      card(`Holding the floor at ${set} °C`, `${fmt(feedSet, 2)} kg/h`, h("span", { class: "small muted" }, `vault ≈ ${fmt(vaultSet)} °C`)));
+    const pts = RW.map(r => [r, bilin(r, ta, "T_shell_C")]);
+    lineChart($("#wi-chart"), { x: [RW[0], RW[RW.length - 1]], y: [0, Math.max(90, ...pts.map(p => p[1])) + 5], xTicks: 4, height: 260, xLabel: "rock-wool thickness on top of 50 mm Superwool, mm", yLabel: "shell, °C",
+      hlines: [{ y: 60, color: css("--bad"), label: "60 °C touch target" }], series: [{ points: pts, color: css("--heat-warm"), dots: true }],
+      markers: [{ x: rw, y: shell, color: css("--accent"), label: `${rw} mm → ${fmt(shell, 1)} °C` }], label: "shell temperature against insulation" });
+  };
+  ["#wi-rw", "#wi-ta", "#wi-set"].forEach(id => $(id).addEventListener("input", update)); update();
+};
+
+// ---------------------------------------------------------------- BRICKWORK
+renderers.bricks = () => {
+  const g = G, a = { Ri: g.R_i, Re: g.R_e, zc: g.z_c, half: g.half_angle };
+  // ---- cross-section (x, z in mm; SVG y down)
+  const ins = g.sw_t + g.rw_t, xo = g.x_wall_out, xmax = xo + ins + 120, zmax = a.zc + a.Re + ins + 140;
+  const W = 2 * xmax, H = zmax + 60, sx = x => x + xmax, sy = z => zmax - z;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, class: "drawing", role: "img", "aria-label": "oven cross-section" });
+  const arcPath = (R, t0, t1, n = 48) => Array.from({ length: n + 1 }, (_, i) => { const t = t0 + (t1 - t0) * i / n; return [sx(R * Math.cos(t)), sy(a.zc + R * Math.sin(t))]; });
+  const envelope = grow => { const w = xo + grow, Re = a.Re + grow, th0 = Math.acos(w / Re); return [[sx(-w), sy(0)], [sx(w), sy(0)], ...arcPath(Re, th0, Math.PI - th0)]; };
+  const poly = (pts, fill, extra = {}) => s("path", { d: "M" + pts.map(p => p.map(v => v.toFixed(1)).join(",")).join("L") + "Z", fill, ...extra });
+  const col = n => css(n);
+  svg.append(s("rect", { x: 0, y: sy(0), width: W, height: 50, fill: col("--sunken") }), s("text", { x: 12, y: sy(0) + 32 }, "concrete base (built separately)"));
+  svg.append(poly(envelope(ins + g.shell_t + 2), col("--steel")), poly(envelope(ins), col("--insul2")), poly(envelope(g.sw_t), col("--insul")));
+  svg.append(poly(envelope(0), col("--bg")));
+  // floor insulation
+  for (let i = 0; i < g.casi_layers; i++) svg.append(s("rect", { x: sx(-(xo + 50)), y: sy((i + 1) * g.casi_t), width: 2 * (xo + 50), height: g.casi_t - 1.5, fill: col("--casi"), stroke: col("--line") }));
+  // thrust strips + rails
+  for (const sgn of [-1, 1]) { const x0 = sgn > 0 ? xo : -xo - ins; svg.append(s("rect", { x: sx(x0), y: sy(g.z_spring + g.thrust_strip_h), width: ins, height: g.thrust_strip_h, fill: col("--casi"), stroke: col("--line") }));
+    const xr = sgn * (xo + ins + g.shell_t); svg.append(s("path", { d: `M${sx(xr)},${sy(g.z_spring)} h${sgn * g.ang} M${sx(xr)},${sy(g.z_spring)} v${-g.ang}`, stroke: col("--steel"), "stroke-width": 5, fill: "none" })); }
+  // floor bricks
+  for (let c = 0; c < g.floor_cols; c++) svg.append(s("rect", { x: sx(-g.floor_cols * g.bW / 2 + c * g.bW) + .7, y: sy(g.z_floor), width: g.bW - 1.4, height: g.bT, fill: col("--brick") }));
+  // side walls
+  for (const sgn of [-1, 1]) svg.append(s("rect", { x: sx(sgn > 0 ? g.span / 2 : -g.span / 2 - g.bT), y: sy(g.z_casi_top + g.wall_h), width: g.bT, height: g.wall_h, fill: col("--brick") }));
+  // skewbacks
+  for (const sgn of [-1, 1]) { const xi = g.span / 2, zi = g.z_spring, xe = xi + g.bT * Math.sin(a.half), ze = zi + g.bT * Math.cos(a.half), out = g.span / 2 + g.bT;
+    svg.append(poly([[xi, zi], [out, zi], [out, ze], [xe, ze]].map(([x, z]) => [sx(sgn * x), sy(z)]), col("--brick-cut"))); }
+  // vault courses (straight bricks) and mortar wedges
+  svg.append(poly([...arcPath(a.Ri, Math.PI / 2 - a.half, Math.PI / 2 + a.half), ...arcPath(a.Re, Math.PI / 2 + a.half, Math.PI / 2 - a.half)], col("--mortar")));
+  const dphi = g.bW / a.Ri, dj = g.arch_joint_in / a.Ri, tot = g.arch_courses * dphi + (g.arch_courses - 1) * dj; let phi = -tot / 2 + dphi / 2;
+  for (let k = 0; k < g.arch_courses; k++) { const c = Math.cos(phi), sn = Math.sin(phi), hw = g.bW / 2;
+    const corners = [[-hw, a.Ri], [hw, a.Ri], [hw, a.Ri + g.bT], [-hw, a.Ri + g.bT]].map(([u, r]) => [u * c + r * sn, a.zc - u * sn + r * c]);
+    svg.append(poly(corners.map(([x, z]) => [sx(x), sy(z)]), col("--brick"))); phi += dphi + dj; }
+  // dimensions
+  const dim = (x1, z1, x2, z2, t, dx = 0, dy = 0) => svg.append(s("line", { x1: sx(x1), y1: sy(z1), x2: sx(x2), y2: sy(z2), stroke: col("--accent"), "stroke-width": 1.5, "marker-start": "url(#ar)", "marker-end": "url(#ar)" }),
+    s("text", { x: (sx(x1) + sx(x2)) / 2 + dx, y: (sy(z1) + sy(z2)) / 2 + dy, "text-anchor": "middle", style: `fill:${col("--accent-ink")}` }, t));
+  svg.prepend(s("defs", {}, s("marker", { id: "ar", viewBox: "0 0 10 10", refX: 5, refY: 5, markerWidth: 6, markerHeight: 6, orient: "auto-start-reverse" }, s("path", { d: "M0,0 L10,5 L0,10 z", fill: col("--accent") }))));
+  dim(-g.span / 2, g.z_floor + 40, g.span / 2, g.z_floor + 40, `span ${fmt(g.span)} mm`, 0, -8);
+  dim(0, g.z_floor, 0, a.zc + a.Ri, "", 0); svg.append(s("text", { x: sx(0) + 10, y: sy((g.z_floor + a.zc + a.Ri) / 2), style: `fill:${col("--accent-ink")}` }, `crown ${fmt(a.zc + a.Ri - g.z_floor)} mm`));
+  $("#xsec").replaceChildren(svg);
+  $("#xsec-legend").replaceChildren(...[["--brick", "Fireclay brick"], ["--brick-cut", "Skewback (cut brick)"], ["--mortar", "Mortar V-joints"], ["--casi", "Calcium-silicate board"], ["--insul", "Superwool 50 mm"], ["--insul2", "ProRox 100 mm"], ["--steel", "Steel shell / rails"]]
+    .map(([c, l]) => h("span", {}, h("span", { class: "swatch", style: `background:var(${c})` }), l)));
+  // ---- elevation
+  const drawWall = which => {
+    [...$("#wall-seg").children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.w === which)));
+    const C = D.courses[which], pad = 30, W2 = 2 * xo + 2 * pad, ztop = a.zc + a.Re + pad, H2 = ztop - g.z_casi_top + pad;
+    const X = x => x + xo + pad, Y = z => ztop - z;
+    const sv = s("svg", { viewBox: `0 0 ${W2} ${H2}`, class: "drawing", role: "img", "aria-label": which + " end wall elevation" });
+    const clipId = "clip-" + which, th0 = Math.acos(xo / a.Re);
+    const outline = [[X(-xo), Y(g.z_casi_top)], [X(xo), Y(g.z_casi_top)], ...Array.from({ length: 49 }, (_, i) => { const t = th0 + (Math.PI - 2 * th0) * i / 48; return [X(a.Re * Math.cos(t)), Y(a.zc + a.Re * Math.sin(t))]; })];
+    sv.append(s("defs", {}, s("clipPath", { id: clipId }, poly(outline, "#000"))));
+    const grp = s("g", { "clip-path": `url(#${clipId})` });
+    const fillFor = k => ({ full: col("--brick"), cut: col("--brick-cut"), curve: col("--brick-curve") }[k]);
+    for (const c of C) { for (const [x0, x1] of c.segments) { let x = x0; for (const pc of c.pieces) { if (x >= x1 - 1) break;
+          const r = s("rect", { x: X(x) + 1, y: Y(c.z1) + 1, width: Math.max(pc.len - 2, 1), height: c.z1 - c.z0 - 2, fill: fillFor(pc.kind), stroke: col("--bg"), "stroke-width": 1 });
+          r.addEventListener("mousemove", ev => showTip(ev, `course ${c.course} · ${fmt(pc.len)} mm · ${pc.kind === "full" ? "full brick" : pc.kind === "cut" ? "straight cut" : "cut to curve"}`)); r.addEventListener("mouseleave", hideTip);
+          grp.append(r); x += pc.len; } } }
+    sv.append(grp, poly(outline, "none", { stroke: col("--ink"), "stroke-width": 1.5 }));
+    if (which === "front") { const d = g.door; const Ro = d.Rd + d.radial;
+      for (let i = 0; i < d.n_voussoirs; i++) { const t0 = Math.PI / 2 + d.half_angle - 2 * d.half_angle * i / d.n_voussoirs, t1 = Math.PI / 2 + d.half_angle - 2 * d.half_angle * (i + 1) / d.n_voussoirs, gap = .006;
+        const pts = [[d.Rd, t0 - gap], [Ro, t0 - gap], [Ro, t1 + gap], [d.Rd, t1 + gap]].map(([r, t]) => [X(r * Math.cos(t)), Y(d.zc + r * Math.sin(t))]);
+        const v = poly(pts, col("--mortar")); v.addEventListener("mousemove", ev => showTip(ev, `door arch voussoir ${i + 1} · half brick 115 mm`)); v.addEventListener("mouseleave", hideTip); sv.append(v); }
+      sv.append(s("text", { x: X(0), y: Y(g.z_floor + 70), "text-anchor": "middle" }, `door ${fmt(g.door_w)} × ${fmt(g.door_h)} mm`)); }
+    sv.append(s("text", { x: X(-xo), y: Y(g.z_casi_top) + 22 }, `seen from outside · ${fmt(C.reduce((t, c) => t + c.bricks, 0), 1)} bricks`));
+    $("#elev").replaceChildren(sv);
+  };
+  $("#wall-seg").onclick = e => { const b = e.target.closest("button"); if (b) drawWall(b.dataset.w); };
+  drawWall("back");
+  const st = D.statics;
+  $("#statics").replaceChildren(...[["Geometric safety factor", fmt(st.safety_factor, 1)], ["Thinnest vault that still stands", `${fmt(st.t_min_mm, 1)} mm (ours ${fmt(g.bT)} mm)`],
+    ["Thrust line in middle third", st.middle_third ? "yes, no joint opens" : "no"], ["Horizontal thrust", `${fmt(st.H_range_N_m[0])}–${fmt(st.H_range_N_m[1])} N per m of vault`],
+    ["Springing half-angle", `${fmt(a.half * 180 / Math.PI, 1)}°`]].flatMap(([k, v]) => [h("dt", {}, k), h("dd", {}, v)]));
+  const fam = {}; for (const p of D.parts) if (p.material === "refarom_65sa_brick" && p.family !== "end wall bricks") fam[p.family] = (fam[p.family] || 0) + (p.name.includes("half") ? .5 : 1);
+  const back = D.courses.back.reduce((t, c) => t + c.bricks, 0), front = D.courses.front.reduce((t, c) => t + c.bricks, 0), door = g.door.n_voussoirs / 2;
+  const rows = [...Object.entries(fam), ["back end wall", back], ["front end wall", front], ["door arch", door]];
+  const total = rows.reduce((t, r) => t + r[1], 0);
+  $("#brick-count").replaceChildren(h("tr", {}, h("th", {}, "Position"), h("th", { class: "num" }, "Bricks")), ...rows.map(([k, v]) => h("tr", {}, h("td", {}, k), h("td", { class: "num mono" }, fmt(v, 1)))),
+    h("tr", {}, h("td", {}, h("b", {}, "Total in the model")), h("td", { class: "num mono" }, h("b", {}, fmt(total, 1)))));
+};
+
+// ---------------------------------------------------------------- MATERIALS
+renderers.materials = () => {
+  const list = $("#mat-list"); const confCls = c => ({ DATASHEET: "c-ok", REFERENCE: "c-info", ASSUMPTION: "c-warn" }[c]);
+  const show = id => {
+    const m = D.materials.find(x => x.id === id); [...list.children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
+    const det = $("#mat-detail"); det.replaceChildren(h("div", { style: "display:grid; gap:6px" }, h("span", { class: "eyebrow" }, m.category.replace(/_/g, " ")), h("h2", {}, m.name), m.notes ? h("p", { class: "small muted" }, m.notes) : null));
+    const rows = m.props.map(p => { const val = p.data ? `${fmt(p.data[0][1], 3)} → ${fmt(p.data[p.data.length - 1][1], 3)}` + `\n${fmt(p.data[0][0])}–${fmt(p.data[p.data.length - 1][0])} °C` : fmt(p.value, Math.abs(p.value) < 10 ? 3 : 0);
+      const src = p.source.url ? h("a", { href: p.source.url, target: "_blank", rel: "noopener" }, p.source.title) : h("span", {}, p.source.title);
+      return h("tr", {}, h("td", {}, p.name, h("div", { class: "small muted" }, p.unit)), h("td", { class: "mono val" }, val, h("div", { class: "small muted" }, `−${fmt(p.rel_low * 100)} / +${fmt(p.rel_high * 100)} %`)),
+        h("td", {}, chip(p.confidence, confCls(p.confidence))), h("td", { class: "small" }, src, p.reasoning ? h("div", { class: "muted", style: "margin-top:4px" }, p.reasoning) : null)); });
+    det.append(h("div", { class: "table-wrap" }, h("table", {}, h("tr", {}, h("th", {}, "Property"), h("th", {}, "Value"), h("th", {}, "Confidence"), h("th", {}, "Source")), ...rows)));
+    const curve = m.props.find(p => p.data && p.name === "Thermal conductivity");
+    if (curve) { const pts = curve.data, ys = pts.map(p => p[1]); const host = h("div", {}); det.append(h("h3", {}, "Conductivity against temperature, with uncertainty band"), host);
+      lineChart(host, { x: [Math.min(0, pts[0][0]), pts[pts.length - 1][0]], y: [0, Math.max(...ys) * (1 + curve.rel_high) * 1.1], width: 620, height: 280, xLabel: "temperature, °C", yLabel: "W/(m·K)", label: "conductivity",
+        series: [{ points: pts, band: pts.map(p => [p[0], p[1] * (1 - curve.rel_low), p[1] * (1 + curve.rel_high)]), color: css("--accent"), dots: true }] }); }
+    if (m.suppliers.length) det.append(h("h3", {}, "Where to buy"), ...m.suppliers.map(su => h("p", { class: "small" }, h("b", {}, su.name), ` · ${su.price} ${su.currency} per ${su.per} · checked ${su.date_checked} `, su.url ? h("a", { href: su.url, target: "_blank", rel: "noopener" }, "listing") : null)));
+  };
+  list.replaceChildren(...D.materials.map(m => h("button", { type: "button", "data-id": m.id, "aria-pressed": "false", onclick: () => show(m.id) }, h("small", {}, m.category.replace(/_/g, " ")), m.name.split(",")[0].split("(")[0].trim())));
+  show(D.materials[0].id);
+};
+
+// ---------------------------------------------------------------- PARTS
+renderers.parts = () => {
+  const b = D.bom; const priced = b.rows.filter(r => r.cost_usd !== "QUOTE"); const q = b.rows.length - priced.length;
+  const pct = Math.min(100, b.priced_usd / b.budget_usd * 100);
+  $("#bom-budget").replaceChildren(h("div", { class: "readouts" },
+    h("div", { class: "readout" }, h("span", { class: "k" }, "Priced so far"), h("span", { class: "v" }, `$${fmt(b.priced_usd)}`), h("div", { class: "meter" }, h("span", { style: `width:${pct}%` }))),
+    h("div", { class: "readout" }, h("span", { class: "k" }, "Left in the ~$1000 budget"), h("span", { class: "v" }, `$${fmt(b.budget_usd - b.priced_usd)}`)),
+    h("div", { class: "readout" }, h("span", { class: "k" }, "Lines waiting for quotes"), h("span", { class: "v" }, q), h("span", { class: "small muted" }, "Romanian quote requests: bom/quote_requests_ro.md"))));
+  const groups = ["All", ...new Set(b.rows.map(r => r.group))]; let cur = "All";
+  const draw = () => { $("#bom-filters").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.g === cur)));
+    $("#bom-table").replaceChildren(h("tr", {}, h("th", {}, "Group"), h("th", {}, "Item"), h("th", { class: "num" }, "Qty"), h("th", {}, "Unit"), h("th", { class: "num" }, "USD"), h("th", {}, "Note")),
+      ...b.rows.filter(r => cur === "All" || r.group === cur).map(r => h("tr", {}, h("td", { class: "small muted" }, r.group), h("td", {}, r.item), h("td", { class: "num mono" }, fmt(r.qty, r.qty % 1 ? 2 : 0)), h("td", { class: "small" }, r.unit),
+        h("td", { class: "num" }, r.cost_usd === "QUOTE" ? chip("quote", "c-warn") : h("span", { class: "mono" }, fmt(r.cost_usd))), h("td", { class: "small muted" }, r.note || "")))); };
+  $("#bom-filters").replaceChildren(h("div", { class: "seg", role: "group", "aria-label": "Group" }, groups.map(g => h("button", { type: "button", "data-g": g, "aria-pressed": "false", onclick: () => { cur = g; draw(); } }, g))));
+  draw();
+};
+
+// ---------------------------------------------------------------- REQUIREMENTS
+renderers.requirements = () => {
+  const mk = (host, items, key, render, all) => { let cur = "all"; const opts = ["all", ...new Set(items.map(i => i[key]))];
+    const draw = () => { host.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === cur))); render(items.filter(i => cur === "all" || i[key] === cur)); };
+    host.replaceChildren(h("div", { class: "seg", role: "group" }, opts.map(o => h("button", { type: "button", "data-v": o, "aria-pressed": "false", onclick: () => { cur = o; draw(); } }, o === "all" ? `all (${items.length})` : `${o} (${items.filter(i => i[key] === o).length})`)))); draw(); };
+  mk($("#req-filters"), D.requirements, "status", rs => $("#req-table").replaceChildren(h("tr", {}, h("th", {}, "ID"), h("th", {}, "Requirement"), h("th", {}, "Status"), h("th", {}, "Verified by")),
+    ...rs.map(r => h("tr", {}, h("td", { class: "mono" }, r.id), h("td", {}, h("b", {}, r.title), h("div", { class: "small muted" }, r.text)), h("td", {}, chip(r.status, statusCls(r.status))), h("td", { class: "small" }, (r.verification || []).join(", "))))));
+  mk($("#risk-filters"), D.risks, "status", rs => $("#risk-table").replaceChildren(h("tr", {}, h("th", {}, "ID"), h("th", {}, "Risk or unknown"), h("th", {}, "Mitigation"), h("th", {}, "Status")),
+    ...rs.map(r => h("tr", {}, h("td", { class: "mono" }, r.id), h("td", {}, r.risk, h("div", { class: "small muted" }, r.why)), h("td", { class: "small" }, r.mitigation), h("td", {}, chip(r.status, statusCls(r.status)))))));
+  $("#decisions").replaceChildren(...D.decisions.map(d => h("li", { class: "small" }, d)));
+};
+
+route();
+})();
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const D = window.OVEN;
+const host = document.getElementById("viewer"), status = document.getElementById("viewer-status");
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const parts = Object.fromEntries(D.parts.map(p => [p.id, p]));
+const LAYERS = [
+  { key: "brick", label: "Brickwork", fams: ["floor bricks", "side wall bricks", "skewback bricks", "vault bricks", "end wall bricks"], color: "--brick" },
+  { key: "board", label: "Floor board and thrust strips", fams: ["floor insulation", "thrust strips"], color: "--casi" },
+  { key: "fibre", label: "Fibre insulation", fams: ["vault insulation", "end insulation"], color: "--insul" },
+  { key: "shell", label: "Outer shell", fams: ["shell"], color: "--steel" },
+  { key: "frame", label: "Steel frame", fams: ["frame"], color: "--steel" },
+  { key: "door", label: "Door, hood and flue", fams: ["door and flue"], color: "--steel" },
+];
+const EXPLODE = { "floor bricks": 0, "floor insulation": .25, "thrust strips": .7, "side wall bricks": .5, "skewback bricks": .6, "vault bricks": .75, "end wall bricks": .7,
+  "vault insulation": 1.2, "end insulation": 1.3, "shell": 1.8, "frame": 2.2, "door and flue": 2.4 };
+let renderer, scene, camera, controls, root, plane, meshes = [], nodes = [], center = new THREE.Vector3(), started = false, selected = null;
+
+function famColor(p) {
+  if (p.material === "prorox_wm960es") return css("--insul2");
+  if (p.material === "superwool_plus_blanket_128") return css("--insul");
+  if (p.material === "casi_board_cs270") return css("--casi");
+  if (p.family.includes("brick")) return p.note === "cut" ? css("--brick-cut") : css("--brick");
+  return p.family === "shell" ? css("--steel") : css("--steel");
+}
+function partOf(obj) { while (obj) { if (parts[obj.name]) return obj; obj = obj.parent; } return null; }
+
+function start() {
+  if (started) return; started = true;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+  } catch (e) { status.textContent = "This browser could not start WebGL, so the 3D view is unavailable. The other sections work."; return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.localClippingEnabled = true;
+  host.prepend(renderer.domElement);
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(35, 4 / 3, 0.01, 50);
+  controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7f74, 1.6));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(2, 3, 2.5); scene.add(sun);
+  plane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 100);
+  const b64 = document.getElementById("oven-glb").textContent.trim();
+  const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer;
+  new GLTFLoader().parse(bin, "", gltf => {
+    root = gltf.scene; root.scale.setScalar(0.001); // glTF from CadQuery: mm, already Y-up
+    root.traverse(o => {
+      if (o.isMesh) { const n = partOf(o); if (!n) return; const p = parts[n.name];
+        o.material = new THREE.MeshStandardMaterial({ color: new THREE.Color(famColor(p)), roughness: p.family === "shell" || p.family === "frame" || p.family === "door and flue" ? .55 : .9,
+          metalness: p.family === "shell" || p.family === "frame" || p.family === "door and flue" ? .35 : 0, side: THREE.DoubleSide, clippingPlanes: [plane] });
+        o.userData.pid = n.name; meshes.push(o); }
+    });
+    root.children.forEach(c => c.children.forEach(n => { if (parts[n.name]) nodes.push(n); }));
+    if (!nodes.length) root.traverse(n => { if (parts[n.name] && !nodes.includes(n)) nodes.push(n); });
+    scene.add(root); root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(root); box.getCenter(center); modelSize = box.getSize(new THREE.Vector3()).length();
+    // model-space centre for the explode directions
+    const mbox = new THREE.Box3(); nodes.forEach(n => mbox.union(new THREE.Box3().setFromObject(n)));
+    for (const n of nodes) { n.userData.home = n.position.clone(); const nb = new THREE.Box3().setFromObject(n), nc = nb.getCenter(new THREE.Vector3());
+      const dir = nc.sub(center); dir.y *= 1.4; if (dir.length() < 1e-6) dir.set(0, 1, 0); dir.normalize();
+      // convert world direction back into the root's local (model mm) frame
+      const inv = new THREE.Matrix4().copy(n.parent.matrixWorld).invert(); const local = dir.clone().transformDirection(inv);
+      n.userData.dir = local; n.userData.fam = parts[n.name].family; }
+    const grid = new THREE.GridHelper(2.4, 24, new THREE.Color(css("--line")), new THREE.Color(css("--line"))); grid.position.y = box.min.y - 0.001; scene.add(grid);
+    status.remove(); buildToggles(); resize(); viewPreset("iso"); animate();
+  }, err => { status.textContent = "The 3D model could not be loaded: " + (err && err.message ? err.message : err); });
+}
+let modelSize = 2;
+function viewPreset(kind) {
+  const r = modelSize * 1.9;
+  const dir = { iso: [0.62, 0.42, 0.66], front: [0, 0.18, 1], side: [1, 0.18, 0] }[kind];
+  const v = new THREE.Vector3(...dir).normalize().multiplyScalar(r);
+  camera.position.copy(center).add(v); controls.target.copy(center); controls.update();
+}
+function buildToggles() {
+  const box = document.getElementById("layer-toggles");
+  box.replaceChildren(...LAYERS.map(L => { const id = "lay-" + L.key; const lab = document.createElement("label"); lab.className = "check"; lab.htmlFor = id;
+    const inp = document.createElement("input"); inp.type = "checkbox"; inp.id = id; inp.checked = true; inp.addEventListener("change", applyLayers);
+    const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = `var(${L.color})`; lab.append(inp, sw, L.label); return lab; }));
+}
+function applyLayers() {
+  const on = new Set(LAYERS.filter(L => document.getElementById("lay-" + L.key).checked).flatMap(L => L.fams));
+  nodes.forEach(n => n.visible = on.has(n.userData.fam));
+}
+function applyExplode() {
+  const v = +document.getElementById("explode").value; document.getElementById("explode-out").textContent = v + " %";
+  for (const n of nodes) n.position.copy(n.userData.home).addScaledVector(n.userData.dir, (EXPLODE[n.userData.fam] ?? 1) * v * 6);
+}
+function applySection() {
+  const v = +document.getElementById("section").value; const out = document.getElementById("section-out");
+  if (!root) return;
+  const box = new THREE.Box3().setFromObject(root);
+  if (v === 0) { plane.constant = 100; out.textContent = "off"; return; }
+  const zc = box.max.z - (box.max.z - box.min.z) * v / 100; plane.constant = zc; out.textContent = v + " % deep";
+}
+function resize() { if (!renderer) return; const w = host.clientWidth, hh = host.clientHeight; renderer.setSize(w, hh, false); camera.aspect = w / hh; camera.updateProjectionMatrix(); }
+function animate() { requestAnimationFrame(animate); controls.update(); renderer.setClearColor(new THREE.Color(css("--viewer")), 1); renderer.render(scene, camera); }
+new ResizeObserver(resize).observe(host);
+document.getElementById("explode").addEventListener("input", applyExplode);
+document.getElementById("section").addEventListener("input", applySection);
+document.getElementById("view-reset").addEventListener("click", () => viewPreset("iso"));
+document.getElementById("view-front").addEventListener("click", () => viewPreset("front"));
+document.getElementById("view-side").addEventListener("click", () => viewPreset("side"));
+let down = null;
+host.addEventListener("pointerdown", e => down = [e.clientX, e.clientY]);
+host.addEventListener("pointerup", e => {
+  if (!down || !renderer || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 4) return;
+  const r = renderer.domElement.getBoundingClientRect(), ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1), camera);
+  const hits = ray.intersectObjects(meshes.filter(m => { let o = m; while (o) { if (!o.visible) return false; o = o.parent; } return true; }), false)
+    .filter(hh => plane.distanceToPoint(hh.point) >= 0);
+  if (selected) selected.forEach(m => m.material.emissive.setHex(0));
+  const pid = hits.length ? hits[0].object.userData.pid : null;
+  selected = pid ? meshes.filter(m => m.userData.pid === pid) : null;
+  if (selected) selected.forEach(m => m.material.emissive.set(css("--accent")).multiplyScalar(.45));
+  window.dispatchEvent(new CustomEvent("part-select", { detail: pid }));
+});
+addEventListener("oven-view", e => { if (e.detail === "model") { start(); requestAnimationFrame(resize); } });
+if ((location.hash || "#overview") === "#model") start();
+</script>
