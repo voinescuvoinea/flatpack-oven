@@ -1,0 +1,141 @@
+{
+ "base": {
+  "wood_kg_h": 1.8305148313041235,
+  "heatup_min": 190.5,
+  "shell_C": 65.10744057933897
+ },
+ "rows": [
+  {
+   "param": "brick_k",
+   "low": 0.7,
+   "high": 1.25,
+   "wood_kg_h_low": 1.8174545537479423,
+   "heatup_min_low": 175.5,
+   "shell_C_low": 64.5872350384135,
+   "wood_kg_h_high": 1.8369353195907456,
+   "heatup_min_high": 197.0,
+   "shell_C_high": 65.35355963106684
+  },
+  {
+   "param": "brick_rho",
+   "low": 0.95,
+   "high": 1.08,
+   "wood_kg_h_low": 1.8305148313041235,
+   "heatup_min_low": 182.0,
+   "shell_C_low": 65.10744057933897,
+   "wood_kg_h_high": 1.8305148313041235,
+   "heatup_min_high": 204.0,
+   "shell_C_high": 65.10744057933897
+  },
+  {
+   "param": "brick_cp",
+   "low": 0.88,
+   "high": 1.05,
+   "wood_kg_h_low": 1.8305148313041235,
+   "heatup_min_low": 170.0,
+   "shell_C_low": 65.10744057933897,
+   "wood_kg_h_high": 1.8305148313041235,
+   "heatup_min_high": 199.0,
+   "shell_C_high": 65.10744057933897
+  },
+  {
+   "param": "eps_brick",
+   "low": 0.8,
+   "high": 1.05,
+   "wood_kg_h_low": 1.9875205836239977,
+   "heatup_min_low": 200.5,
+   "shell_C_low": 66.10209339768073,
+   "wood_kg_h_high": 1.8005208433530762,
+   "heatup_min_high": 188.5,
+   "shell_C_high": 64.90681250995675
+  },
+  {
+   "param": "sw_k",
+   "low": 0.9,
+   "high": 1.2,
+   "wood_kg_h_low": 1.8029679767042863,
+   "heatup_min_low": 190.0,
+   "shell_C_low": 63.13702873059674,
+   "wood_kg_h_high": 1.884035345296884,
+   "heatup_min_high": 191.0,
+   "shell_C_high": 68.83306160196054
+  },
+  {
+   "param": "casi_k",
+   "low": 0.7,
+   "high": 1.0,
+   "wood_kg_h_low": 1.7884475907987742,
+   "heatup_min_low": 190.0,
+   "shell_C_low": 65.01854130057552,
+   "wood_kg_h_high": 1.8305148313041235,
+   "heatup_min_high": 190.5,
+   "shell_C_high": 65.10744057933897
+  },
+  {
+   "param": "conc_k",
+   "low": 0.6,
+   "high": 1.25,
+   "wood_kg_h_low": 1.8198502904170024,
+   "heatup_min_low": 190.5,
+   "shell_C_low": 65.08456291983401,
+   "wood_kg_h_high": 1.8339111921226832,
+   "heatup_min_high": 190.5,
+   "shell_C_high": 65.1147358298756
+  },
+  {
+   "param": "eps_shell",
+   "low": 0.95,
+   "high": 1.03,
+   "wood_kg_h_low": 1.830217772055226,
+   "heatup_min_low": 190.5,
+   "shell_C_low": 65.80447440653131,
+   "wood_kg_h_high": 1.8306863689929949,
+   "heatup_min_high": 190.5,
+   "shell_C_high": 64.7070133940108
+  },
+  {
+   "param": "chi_r",
+   "low": 0.4199999888858903,
+   "high": 0.6,
+   "wood_kg_h_low": 2.045370685055101,
+   "heatup_min_low": 235.0,
+   "shell_C_low": 65.17595279923063,
+   "wood_kg_h_high": 1.8305148156733637,
+   "heatup_min_high": 190.5,
+   "shell_C_high": 65.10744057262235
+  },
+  {
+   "param": "excess_air",
+   "low": 1.2997654919617194,
+   "high": 2.413850199357479,
+   "wood_kg_h_low": 1.4851819755830824,
+   "heatup_min_low": 170.5,
+   "shell_C_low": 65.13838302007633,
+   "wood_kg_h_high": 2.209914964793597,
+   "heatup_min_high": 208.0,
+   "shell_C_high": 65.04816839263475
+  },
+  {
+   "param": "h_in_W_m2K",
+   "low": 7.731570521625615,
+   "high": 14.358630968733285,
+   "wood_kg_h_low": 1.660310918976439,
+   "heatup_min_low": 182.0,
+   "shell_C_low": 64.03507814868931,
+   "wood_kg_h_high": 2.0032020954339447,
+   "heatup_min_high": 199.0,
+   "shell_C_high": 66.1285630881112
+  },
+  {
+   "param": "tau_burn_s",
+   "low": 450.0,
+   "high": 1800.0,
+   "wood_kg_h_low": 1.8305148313041235,
+   "heatup_min_low": 183.5,
+   "shell_C_low": 65.10744057933897,
+   "wood_kg_h_high": 1.8305148313041235,
+   "heatup_min_high": 204.5,
+   "shell_C_high": 65.10744057933897
+  }
+ ]
+}

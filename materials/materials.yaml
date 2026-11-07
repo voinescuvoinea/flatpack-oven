@@ -1,0 +1,510 @@
+# Materials database. Schema: materials/README.md. Loader/validator: materials/db.py.
+# Every value carries a source. Proxies (data borrowed from a comparable product) are ASSUMPTION.
+schema_version: 1
+materials:
+
+  # ------------------------------------------------------------------ refractory
+  - id: refarom_65sa_brick
+    name: Fireclay brick Refarom 65 SA, 230x114x64 mm
+    category: refractory_dense
+    product:
+      manufacturer: SC REFAROM SA, Brasov, Romania
+      product_name: Caramida refractara 65 SA (sold by Hornbach as "Helios R-65SA")
+      grade: "65 SA, SiO2 >= 65 % (siliceous-aluminous fireclay)"
+      format_mm: [230, 114, 64]
+    suppliers:
+      - name: HORNBACH Romania
+        url: https://www.hornbach.ro/p/caramida-refractara-samota-helios-r-65sa-230x114x64-mm/8190823/
+        price: 5.74
+        currency: RON
+        per: piece
+        date_checked: 2026-11-07
+        notes: "5.55 RON/piece from 322 pcs. Stock seen for Domnesti (Ilfov); check local store stock. 230x114x32 splits also listed (product 8190824)."
+    notes: >
+      The manufacturer datasheet gives no thermal properties. k, rho, cp and expansion
+      are taken as ASSUMPTION from the closest fully documented European fireclay grade
+      (Haasser H3, 30-35 % Al2O3, open porosity 19-23 %, vs Refarom porosity <= 24 %).
+      Requesting a full datasheet from Refarom (import@refarom.ro) would close this gap.
+    properties:
+      max_service_temperature:
+        unit: degC
+        value: 1150
+        confidence: DATASHEET
+        uncertainty: {rel_low: 0.05, rel_high: 0.0}
+        source:
+          title: Hornbach product listing 8190823 ("rezistent la foc pana la 1150 C")
+          url: https://www.hornbach.ro/p/caramida-refractara-samota-helios-r-65sa-230x114x64-mm/8190823/
+          accessed: 2026-11-07
+      porosity:
+        unit: dimensionless
+        value: 0.24
+        confidence: DATASHEET
+        uncertainty: {rel_low: 0.3, rel_high: 0.0}
+        source: &refarom_ds
+          title: REFAROM Fisa tehnica Caramida refractara 65 SA (apparent porosity max 24 %)
+          url: https://media.hornbach.ro/hb/technicaldatasheet/as.94214579.pdf
+          locator: Caracteristici tehnice
+          accessed: 2026-11-07
+          file: sources/hornbach_samota_230x114x64_fisa_tehnica.pdf
+      cold_crushing_strength:
+        unit: N/mm**2
+        value: 20
+        confidence: DATASHEET
+        uncertainty: {rel_low: 0.0, rel_high: 1.0}
+        reasoning: datasheet gives a minimum; real value is >= 20
+        source: *refarom_ds
+      thermal_conductivity:
+        unit: W/(m*K)
+        data:
+          - {T_C: 400, value: 1.20}
+          - {T_C: 700, value: 1.25}
+          - {T_C: 1100, value: 1.35}
+        confidence: ASSUMPTION
+        reasoning: >
+          Proxy: Haasser H3 (ASTM C202), the closest documented grade by alumina and
+          porosity. Bony B40SR (denser, 40-42 % Al2O3) gives 1.48/1.45/1.50 at
+          200/400/600 C, i.e. k is nearly flat from 200 to 400 C; holding the 400 C
+          value constant below 400 C is therefore a reasonable recorded extrapolation.
+          A more porous brick conducts less, hence the wider low-side band.
+        uncertainty: {rel_low: 0.30, rel_high: 0.25}
+        source: &haasser
+          title: HAASSER Produits Refractaires, fiche Refractaires faconnes denses - Argileux, grades H3/H2/H1/HO
+          url: https://forums.futura-sciences.com/attachments/habitat-bioclimatique-isolation-chauffage/187061d1340917612-construction-realiste-dun-poele-de-masse-ft-h1.pdf
+          locator: column H3
+          accessed: 2026-11-07
+          file: sources/fireclay_ft_h1_futura.pdf
+      density:
+        unit: g/cm**3
+        value: 2.05
+        confidence: ASSUMPTION
+        reasoning: Proxy Haasser H3 bulk density (2.05 t/m3); comparable fireclay grades are 2.0-2.25.
+        uncertainty: {rel_low: 0.05, rel_high: 0.08}
+        source: *haasser
+      specific_heat:
+        unit: kJ/(kg*K)
+        value: 1.06
+        confidence: ASSUMPTION
+        reasoning: >
+          Proxy Haasser H3 mean specific heat 20-1100 C. Durrath COR 30 gives a mean of
+          0.96 kJ/kgK over 20-400 C, closer to our operating range, hence the low-side band.
+        uncertainty: {rel_low: 0.12, rel_high: 0.05}
+        source: *haasser
+      thermal_expansion:
+        unit: 1/delta_degC
+        value: 7.5e-6
+        confidence: ASSUMPTION
+        reasoning: Proxy Haasser H3. Bony B40SR shows 0.26 % at 400 C (~6.5e-6/K mean).
+        uncertainty: {rel: 0.2}
+        source: *haasser
+      emissivity:
+        unit: dimensionless
+        data:
+          - {T_C: 400, value: 0.8327}
+          - {T_C: 1400, value: 0.7327}
+        confidence: REFERENCE
+        reasoning: >
+          IFRF correlation e = 0.9 - 1e-4*T[K] for low-Al2O3 fireclay, valid 673-1673 K
+          (points evaluated at the range ends). The medium-Al2O3 correlation
+          (0.84 - 2e-4*T) gives ~16 % less at 450 C, covered by the low-side band.
+          Cross-check - Optris table lists fireclay 0.73 at 1000 C (correlation 0.77).
+          Held constant below 400 C (recorded extrapolation, K-23).
+        uncertainty: {rel_low: 0.20, rel_high: 0.05}
+        source:
+          title: IFRF Online Combustion Handbook - emissivity of firebrick and refractories vs temperature (cites Osborn, Handbook of Energy Data and Calculations, Butterworth 1985)
+          url: https://ifrf.net/?p=8893
+          locator: fireclay/firebrick, low Al2O3 row
+          accessed: 2026-11-07
+
+  - id: dense_castable_generic
+    name: Dense refractory castable, ~1300 C class (placeholder until a product datasheet is obtained)
+    category: refractory_castable
+    notes: >
+      Only used for the cast-segment concept. Candidate products: Refarom BR 40 A (sold by
+      Romstal; datasheet blocks automated download - request it), or Solargil Beton
+      refractaire 1300 C 25 kg (EU online).
+    suppliers:
+      - name: Solargil (FR, EU online)
+        url: https://solargil.com/gb/materiels-refractaires/520-beton-refractaire-1300-25-kg.html
+        price: 57.48
+        currency: EUR
+        per: 25 kg bag
+        date_checked: 2026-11-07
+        notes: Price from search-result snippet, not verified on page; shipping to RO not checked.
+    properties:
+      density:
+        unit: g/cm**3
+        value: 2.2
+        confidence: ASSUMPTION
+        reasoning: >
+          No castable datasheet obtained yet. Dense fireclay shapes of the same chemistry
+          are 2.05-2.25 g/cm3 (Haasser H3-HO); a cast (unpressed) product is assumed to sit
+          in the same band. Wide uncertainty until a datasheet replaces this.
+        uncertainty: {rel: 0.1}
+        source: *haasser
+
+  # ------------------------------------------------------------------ insulation
+  - id: superwool_plus_blanket_128
+    name: Morgan Thermal Ceramics Superwool Plus blanket, 128 kg/m3 (AES, bio-soluble)
+    category: insulation
+    product:
+      manufacturer: Morgan Advanced Materials - Thermal Ceramics
+      product_name: Superwool Plus Blanket
+      grade: 128 kg/m3; thicknesses 6-50 mm; 25 mm roll 610 mm x 7.32 m (4.46 m2)
+    suppliers:
+      - name: Textile Technologies (EU online)
+        url: https://www.textiletechnologies.co.uk/en-de/products/morgan-superwool-plus-blanket
+        price: 139.95
+        currency: EUR
+        per: roll 25 mm x 610 mm x 7.32 m
+        date_checked: 2026-11-07
+        notes: From search-result snippet; listing title says 96 kg/m3 while SKU says 128 - confirm density before ordering. No Romanian stockist found yet.
+    notes: >
+      Not classified as carcinogenic in the EU (Note Q, EC 1272/2008) per the datasheet -
+      satisfies R-S5. Datasheet has no k below 200 C mean; the cold side of the
+      insulation runs below that, so the 200 C value is used as an upper bound there
+      (conservative for heat loss, recorded in risks K-17).
+    properties:
+      thermal_conductivity:
+        unit: W/(m*K)
+        data:
+          - {T_C: 200, value: 0.05}
+          - {T_C: 400, value: 0.08}
+          - {T_C: 600, value: 0.12}
+          - {T_C: 800, value: 0.18}
+          - {T_C: 1000, value: 0.25}
+        confidence: DATASHEET
+        uncertainty: {rel_low: 0.10, rel_high: 0.20}
+        source: &superwool
+          title: Superwool Plus Blanket Product Data Sheet, code BL.01, published 18 April 2025 (ASTM C201)
+          url: https://morganthermalceramics.com/media/5855/3-superwool-plus-blanket.pdf
+          locator: p.2, Thermal Conductivity table, 128 kg/m3 column
+          accessed: 2026-11-07
+          file: sources/morgan_superwool_plus_blanket_2025-04.pdf
+      density:
+        unit: kg/m**3
+        value: 128
+        confidence: DATASHEET
+        uncertainty: {rel: 0.10}
+        source: *superwool
+      max_service_temperature:
+        unit: degC
+        value: 1050
+        confidence: DATASHEET
+        uncertainty: {rel: 0.0}
+        reasoning: continuous use temperature (classification temperature is 1200 C)
+        source: *superwool
+      specific_heat:
+        unit: kJ/(kg*K)
+        value: 1.0
+        confidence: ASSUMPTION
+        reasoning: >
+          Not on the datasheet. Silicate refractories of similar oxide make-up have mean cp
+          0.96-1.06 kJ/kgK (Durrath COR 30, Haasser H3). At 128 kg/m3 the blanket's heat
+          capacity is small, so the effect on heat-up is minor (checked in sensitivity).
+        uncertainty: {rel: 0.2}
+        source: *haasser
+
+  - id: casi_board_cs270
+    name: Calcium silicate board CS-270, 1200x600x25 mm (Hornbach "placa alba izolare semineu 25 mm")
+    category: insulation
+    product:
+      product_name: Placa silicat de calciu 1000 (CS-270)
+      format_mm: [1200, 600, 25]
+    suppliers:
+      - name: HORNBACH Romania
+        url: https://www.hornbach.ro/p/placa-alba-izolare-semineu-25-mm/10735373/
+        price: 94.00
+        currency: RON
+        per: sheet 1200x600x25 mm (0.72 m2)
+        date_checked: 2026-11-07
+        notes: The listing links two datasheets (CS-270 and ROKASIL-1100, the latter without k). Confirm in store which board is supplied.
+    notes: >
+      Datasheet gives k <= 0.056 + 0.00011 t (W/mK), t = mean of hot and cold face in C.
+      For a linear k(T), the mean-temperature form equals the local form, so the data
+      points below are the local k(T). The datasheet value is an upper bound, hence the
+      one-sided uncertainty.
+    properties:
+      thermal_conductivity:
+        unit: W/(m*K)
+        data:
+          - {T_C: 0, value: 0.056}
+          - {T_C: 1000, value: 0.166}
+        confidence: DATASHEET
+        uncertainty: {rel_low: 0.30, rel_high: 0.0}
+        source: &casi
+          title: Placa silicat de calciu 1000, CS-270 technical sheet (Hornbach)
+          url: https://media.hornbach.ro/hb/technicaldatasheet/as.79048420.pdf
+          locator: Proprietati fizice table
+          accessed: 2026-11-07
+          file: sources/hornbach_casi_board_25mm_a.pdf
+      density:
+        unit: kg/m**3
+        value: 270
+        confidence: DATASHEET
+        uncertainty: {rel: 0.10}
+        source: *casi
+      max_service_temperature:
+        unit: degC
+        value: 1050
+        confidence: DATASHEET
+        uncertainty: {rel: 0.0}
+        source: *casi
+      permanent_linear_change:
+        unit: dimensionless
+        value: 0.015
+        confidence: DATASHEET
+        uncertainty: {rel_low: 0.9, rel_high: 0.0}
+        reasoning: datasheet gives shrinkage <= 1.5 % after 3 h at 1000 C (upper bound)
+        source: *casi
+      specific_heat:
+        unit: kJ/(kg*K)
+        value: 1.0
+        confidence: ASSUMPTION
+        reasoning: Not on the datasheet; proxy from silicate refractories (0.96-1.06 kJ/kgK, Durrath COR 30 / Haasser H3). Low-density board, minor effect.
+        uncertainty: {rel: 0.2}
+        source: *haasser
+
+  # ------------------------------------------------------------------ sealant
+  - id: fermit_stove_sealant
+    name: Fermit "Chit pentru semineu" refractory sealant, 310 ml cartridge
+    category: sealant
+    suppliers:
+      - name: HORNBACH Romania
+        url: https://www.hornbach.ro/p/chit-pentru-semineu-310-ml/3723908/
+        price: 37.52
+        currency: RON
+        per: cartridge 310 ml
+        date_checked: 2026-11-07
+    notes: Composition not stated on listing; obtain datasheet before use. Never on the cooking surface (R-S6).
+    properties:
+      max_service_temperature:
+        unit: degC
+        value: 1000
+        confidence: DATASHEET
+        uncertainty: {rel: 0.0}
+        source:
+          title: Hornbach product listing 3723908 ("rezistent la foc pana la 1000 C")
+          url: https://www.hornbach.ro/p/chit-pentru-semineu-310-ml/3723908/
+          accessed: 2026-11-07
+
+  # ------------------------------------------------------------------ steel
+  - id: stainless_1_4301_sheet
+    name: Stainless steel sheet EN 1.4301 (AISI 304)
+    category: structural_steel
+    notes: No price obtained (EU stockists require login). Get a local quote (local laser shop) in Phase 3. Thermal and oxidation properties to be sourced only if a steel-liner concept is chosen.
+    properties:
+      density:
+        unit: kg/m**3
+        value: 8000
+        confidence: DATASHEET
+        uncertainty: {rel: 0.02}
+        reasoning: derived from stockist listing, 1 sheet 1.0 x 1000 x 2000 mm = 16 kg
+        source:
+          title: ehorst.de listing 1003410, Sheets 1.4301 K240 1.00/1000/2000 mm ("1 board = 16 Kilogramm")
+          url: https://www.ehorst.de/en/Edelstahlbleche-1-4301-K240-1-00-1000-2000-mm-eins-Folie-EN10088-2-1003410.html
+          accessed: 2026-11-07
+
+  # ------------------------------------------------------------------ fuel
+  - id: oak_firewood_f22
+    name: Seasoned oak logs as used in the Falciano et al. (2022) pilot oven
+    category: fuel
+    properties:
+      lower_heating_value:
+        unit: MJ/kg
+        value: 16.66
+        confidence: REFERENCE
+        uncertainty: {rel: 0.05}
+        reasoning: calculated by the authors from composition at 5.67 % moisture; our wood moisture will differ (K-02)
+        source: &f22
+          title: Falciano, Masi & Moresi (2022) Performance characterization of a traditional wood-fired pizza oven, J. Food Sci. 87(9):4107-4118, doi:10.1111/1750-3841.16268
+          url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9804529/
+          locator: Materials and methods, firewood characterisation
+          accessed: 2026-11-07
+      moisture_content:
+        unit: dimensionless
+        value: 0.0567
+        confidence: REFERENCE
+        uncertainty: {rel: 0.03}
+        source: *f22
+      combustion_efficiency:
+        unit: dimensionless
+        value: 0.87
+        confidence: REFERENCE
+        uncertainty: {rel_low: 0.10, rel_high: 0.03}
+        reasoning: 87 +/- 3 % at 3 kg/h, falling to 79 +/- 4 % at 9 kg/h
+        source: *f22
+      mass_fraction_C:
+        unit: dimensionless
+        value: 0.506
+        confidence: REFERENCE
+        reasoning: dry-basis ultimate analysis of oak used by F22 (from Vassilev et al. 2010)
+        uncertainty: {rel: 0.05}
+        source: *f22
+      mass_fraction_H:
+        unit: dimensionless
+        value: 0.061
+        confidence: REFERENCE
+        reasoning: dry-basis ultimate analysis of oak used by F22 (from Vassilev et al. 2010)
+        uncertainty: {rel: 0.05}
+        source: *f22
+      mass_fraction_O:
+        unit: dimensionless
+        value: 0.429
+        confidence: REFERENCE
+        reasoning: dry-basis ultimate analysis of oak used by F22 (from Vassilev et al. 2010)
+        uncertainty: {rel: 0.05}
+        source: *f22
+      mass_fraction_N:
+        unit: dimensionless
+        value: 0.003
+        confidence: REFERENCE
+        reasoning: dry-basis ultimate analysis of oak used by F22 (from Vassilev et al. 2010)
+        uncertainty: {rel: 0.05}
+        source: *f22
+      mass_fraction_S:
+        unit: dimensionless
+        value: 0.001
+        confidence: REFERENCE
+        reasoning: dry-basis ultimate analysis of oak used by F22 (from Vassilev et al. 2010)
+        uncertainty: {rel: 0.05}
+        source: *f22
+
+  # ------------------------------------------------------------------ base and finishes
+  - id: concrete_base_generic
+    name: Ordinary cast concrete (user-built base, R-F4)
+    category: other
+    notes: >
+      ASSUMPTION values for ordinary dense concrete. A copy of EN 1992-1-2 found online was
+      not used (not an authorised copy). Values to be replaced from an authorised
+      source. The concrete-surface temperature is also bounded by a case that does
+      not depend on these properties.
+    properties:
+      thermal_conductivity:
+        unit: W/(m*K)
+        value: 1.6
+        confidence: ASSUMPTION
+        reasoning: ordinary concrete is commonly quoted between about 1.0 and 2.0 W/mK near room temperature; mid value with a wide band
+        uncertainty: {rel_low: 0.4, rel_high: 0.25}
+        source: &concrete_assump
+          title: ASSUMPTION - engineering judgement pending an authorised copy of EN 1992-1-2 cl. 3.3
+          citation: none yet
+          accessed: 2026-11-07
+      density:
+        unit: kg/m**3
+        value: 2300
+        confidence: ASSUMPTION
+        reasoning: normal-weight concrete
+        uncertainty: {rel: 0.05}
+        source: *concrete_assump
+      specific_heat:
+        unit: J/(kg*K)
+        value: 900
+        confidence: ASSUMPTION
+        reasoning: dry concrete near room temperature; moisture raises the effective value
+        uncertainty: {rel: 0.2}
+        source: *concrete_assump
+      emissivity:
+        unit: dimensionless
+        value: 0.97
+        confidence: REFERENCE
+        uncertainty: {rel_low: 0.05, rel_high: 0.0}
+        source: &optris
+          title: Optris emissivity table for LWIR pyrometers (recommendations; verify for critical use)
+          url: https://optris.com/us/technology/emissivity-table/
+          locator: Concrete, 20 C, 0.97
+          accessed: 2026-11-07
+
+  - id: shell_heat_resistant_paint
+    name: Outer shell finish - heat-resistant paint on steel
+    category: other
+    properties:
+      emissivity:
+        unit: dimensionless
+        value: 0.92
+        confidence: REFERENCE
+        reasoning: Optris lists heat-resistant lacquer 0.92 at 100 C and paints of 8 colours 0.92-0.94 at 70 C. Aluminium paints are much lower (0.27-0.33), so avoid them on the shell.
+        uncertainty: {rel_low: 0.05, rel_high: 0.03}
+        source: *optris
+
+  - id: prorox_wm960es
+    name: ROCKWOOL ProRox WM 960ES stone-wool wired mat (outer vault insulation layer)
+    category: insulation
+    product:
+      manufacturer: ROCKWOOL Technical Insulation
+      product_name: ProRox WM 960ES (galvanized mesh; stainless mesh on request)
+    notes: >
+      Outer, cooler layer of the hybrid vault insulation. Maximum service 660 C, so it must
+      sit behind enough Superwool to keep its hot face well below that. No public price found
+      (quote from a ROCKWOOL Romania distributor). Galvanized mesh is acceptable only while the
+      mesh stays below the zinc coating limit (R-S5); request the stainless mesh variant if the
+      interface temperature is high.
+    properties:
+      thermal_conductivity:
+        unit: W/(m*K)
+        data:
+          - {T_C: 50, value: 0.041}
+          - {T_C: 100, value: 0.046}
+          - {T_C: 150, value: 0.053}
+          - {T_C: 200, value: 0.061}
+          - {T_C: 250, value: 0.071}
+          - {T_C: 300, value: 0.083}
+          - {T_C: 350, value: 0.096}
+          - {T_C: 400, value: 0.111}
+          - {T_C: 500, value: 0.146}
+          - {T_C: 600, value: 0.186}
+          - {T_C: 660, value: 0.213}
+        confidence: DATASHEET
+        uncertainty: {rel_low: 0.05, rel_high: 0.15}
+        source: &prorox
+          title: ROCKWOOL Technical Insulation, Product Data Sheet ProRox WM 960ES, INT-PEN-01-2-002, issued 17.07.2026 (EN 12667)
+          url: https://rti.rockwool.com/siteassets/tools--documentation/products-industrial/product-data-sheets/english/rw-ti-pds-prorox-wm-960-en.pdf
+          locator: Product properties table
+          accessed: 2026-11-07
+          file: sources/rockwool_prorox_wm960_pds_en.pdf
+      density:
+        unit: kg/m**3
+        value: 100
+        confidence: DATASHEET
+        uncertainty: {rel: 0.1}
+        source: *prorox
+      max_service_temperature:
+        unit: degC
+        value: 660
+        confidence: DATASHEET
+        uncertainty: {rel: 0.0}
+        source: *prorox
+      specific_heat:
+        unit: kJ/(kg*K)
+        value: 0.85
+        confidence: ASSUMPTION
+        reasoning: Not on the datasheet. Stone wool is a silicate fibre; proxy range of silicate refractories (0.96-1.06) lowered slightly for basalt-type glass. Low density - minor effect.
+        uncertainty: {rel: 0.25}
+        source: *haasser
+
+  - id: helios_refractory_mortar_mc29a
+    name: HELIOS refractory chamotte mortar (silico-aluminous, MC-29A), 25 kg
+    category: sealant
+    product:
+      manufacturer: SC HELIOS SA, Astileu (Bihor), Romania
+      product_name: Mortar refractar de samota
+    suppliers:
+      - name: HORNBACH Romania
+        url: https://www.hornbach.ro/p/mortar-refractar-pentru-samota-helios-25-kg/8190819/
+        price: 35.70
+        currency: RON
+        per: bag 25 kg
+        date_checked: 2026-11-07
+    notes: Used only to fill the pre-formed V-joints of the vault and door arch (outside the cooking surface).
+    properties:
+      max_service_temperature:
+        unit: degC
+        value: 1250
+        confidence: DATASHEET
+        uncertainty: {rel: 0.0}
+        reasoning: subgroup MC-29A (Al2O3 >= 29 %), which matches the 1250 C rating on the Hornbach listing
+        source:
+          title: HELIOS SA Fisa tehnica de produs - Mortare refractare silico-aluminoase (Tabel 2)
+          url: https://media.hornbach.ro/hb/technicaldatasheet/as.53891455.pdf
+          locator: Tabel 2, MC-29A
+          accessed: 2026-11-07
+          file: sources/hornbach_helios_mortar_fisa.pdf

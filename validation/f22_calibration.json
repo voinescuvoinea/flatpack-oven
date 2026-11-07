@@ -1,0 +1,74 @@
+{
+  "params": {
+    "chi_r": 0.5999999841227004,
+    "excess_air": 1.856807845659599,
+    "h_in_W_m2K": 11.04510074517945,
+    "t_ins_m": 0.010000004860027683,
+    "t_ins_floor_m": 0.005000232970959802
+  },
+  "param_std_err": {
+    "chi_r": 0.3253605353388263,
+    "excess_air": 0.8913436581587898,
+    "h_in_W_m2K": 38.34400215683592,
+    "t_ins_m": 0.04534403382346097,
+    "t_ins_floor_m": 0.2471016237693586
+  },
+  "fit": {
+    "T_floor_C": 493.5674751631615,
+    "T_vault_C": 572.720341205965,
+    "flue_frac": 0.5106333005659154,
+    "walls_frac": 0.32483006964351185,
+    "door_frac": 0.16445039545826326,
+    "T_gas_C": 640.44176320762,
+    "T_fire_bed_C": 816.2898367896897
+  },
+  "targets": {
+    "T_floor_C": [
+      453.0,
+      32.0
+    ],
+    "T_vault_C": [
+      546.0,
+      53.0
+    ],
+    "flue_frac": [
+      0.46,
+      0.05
+    ],
+    "walls_frac": [
+      0.26,
+      0.05
+    ]
+  },
+  "normalised_residuals": [
+    1.267733598848796,
+    0.5041573812446234,
+    1.0126660113183072,
+    1.296601392870237,
+    -3.5564699214975275,
+    -2.4423451468072184
+  ],
+  "status": "Both `ftol` and `xtol` termination conditions are satisfied.",
+  "validation_heating_rate": {
+    "3.0": {
+      "model_C_per_h": 69.27676033143707,
+      "measured_C_per_h": 147.0,
+      "used_in_calibration": true
+    },
+    "4.5": {
+      "model_C_per_h": 115.8739620999962,
+      "measured_C_per_h": 220.5,
+      "used_in_calibration": false
+    },
+    "6.0": {
+      "model_C_per_h": 168.24378527854287,
+      "measured_C_per_h": 294.0,
+      "used_in_calibration": false
+    },
+    "9.0": {
+      "model_C_per_h": 284.49579098682455,
+      "measured_C_per_h": 441.0,
+      "used_in_calibration": true
+    }
+  }
+}

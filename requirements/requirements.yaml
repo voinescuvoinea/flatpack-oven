@@ -1,0 +1,205 @@
+# Single source of truth for requirements.
+# status:       confirmed (user stated) | proposed (Claude default, needs user OK) | open (needs user answer)
+# verification: analysis | test | inspection | demonstration
+# Change only through an approved amendment, recorded in docs/reports/phase-N.md.
+
+schema_version: 1
+requirements:
+
+  # ---------------- Performance ----------------
+  - id: R-P1
+    title: Cooking floor temperature
+    text: Cooking floor surface 400–480 °C, sustained for at least 60 min with periodic re-fuelling.
+    values: {T_floor_min_C: 400, T_floor_max_C: 480, duration_min: 60}
+    status: confirmed
+    verification: [analysis, test]
+
+  - id: R-P1a
+    title: Wood consumption while holding R-P1
+    text: Re-fuelling rate needed to hold R-P1 is predicted (as a range) and reported; no hard limit yet.
+    values: {wood_hold_450C_kg_h_nominal: 1.8, wood_hold_450C_kg_h_range: [1.5, 2.2]}
+    notes: Model prediction for oven B (Phase 2, approved 2026-11-07). Informative, not a limit. Published-oven anchor - 3 kg/h for a less insulated 90 cm oven.
+    status: confirmed
+    verification: [analysis, test]
+
+  - id: R-P2
+    title: Heat-up time
+    text: From 10 °C ambient (cold, dry oven) to R-P1 conditions in ≤ 90 min.
+    values: {t_heatup_max_min: 90, T_ambient_C: 10}
+    status: confirmed
+    notes: Approved by user 2026-11-07, re-confirmed after Phase 2. Model upper bound 118 min at 9 kg/h (model is pessimistic for heat-up, K-24); verify at first firing.
+    verification: [analysis, test]
+  - id: R-P3
+    title: Hot-face design temperature
+    text: Internal hot-face design temperature 550 °C nominal. Hot-face materials have a documented margin above this for local flame contact.
+    values: {T_hotface_design_C: 550}
+    status: confirmed
+    verification: [analysis, inspection]
+
+  - id: R-P4
+    title: Cooking floor size
+    text: Fits one 45 cm pizza with the fire burning beside it. Internal floor dimensions are derived in Phase 1 from pizza size plus fire and working clearance.
+    values: {pizza_diameter_cm: 45}
+    status: confirmed
+    notes: User choice 2026-11-07. Larger than the AVPN Neapolitan norm (to verify in Phase 1), which affects only floor size, not the bake regime.
+    verification: [inspection]
+  - id: R-P5
+    title: Floor recovery between pizzas
+    text: Floor returns to ≥ 400 °C within a recovery time set in Phase 1 from published Neapolitan practice.
+    status: proposed
+    verification: [analysis, test]
+
+  - id: R-P0
+    title: Design optimisation target
+    text: Optimise for Neapolitan-style pizza only, meaning a short, very hot bake with high floor and dome temperatures and fast heat-up. Not a multi-purpose oven.
+    status: confirmed
+    notes: User decision 2026-11-07.
+    verification: [analysis]
+  - id: R-P6
+    title: Retained-heat cooking
+    text: Not a requirement. Retained heat for bread or roasts is explicitly not a design goal (see R-P0), so thermal mass is sized for pizza performance, not for heat storage.
+    status: confirmed
+    notes: User decision 2026-11-07 (pizza only).
+    verification: [analysis]
+  # ---------------- Physical / flat-pack ----------------
+  - id: R-F1
+    title: Kit of numbered parts
+    text: Modular, numbered parts with step-by-step instructions. Assembly uses common workshop tools. No welding. No bricklaying skill - numbered, pre-cut bricks placed dry on templates and a former; the only wet work is filling marked joints with ready-mixed refractory mortar (vault V-joints, door arch, front wall). No on-site casting of the oven.
+    status: confirmed
+    notes: Amended 2026-11-07 after Phase 3 (user approved).
+    verification: [inspection, demonstration]
+
+  - id: R-F2
+    title: Part mass
+    text: Every part can be moved by a small group of people without lifting equipment. Limits are ≤ 25 kg for parts handled by one person and ≤ 100 kg absolute (4 carriers, with handles or lifting points).
+    values: {m_one_person_kg: 25, m_part_max_kg: 100}
+    status: confirmed
+    notes: Approved by user 2026-11-07. 25 kg per person = HSE INDG143 rev4 Fig. 1 filter (men, knuckle-elbow height). 16 kg applies for women - label parts over 16 kg.
+    verification: [analysis, inspection]
+  - id: R-F3
+    title: Installation mode
+    text: Fixed, permanent outdoor installation, assembled once. Parts stay replaceable for repair, but repeated assembly cycles are not a design driver.
+    status: confirmed
+    verification: [inspection]
+
+  - id: R-F4
+    title: Base / support
+    text: The user builds a cast concrete base/plinth. It is outside the material budget and may act as part of the oven structure. The oven design specifies the interface - footprint, top level, load, anchoring, and the maximum temperature allowed at the concrete surface (sourced in Phase 1).
+    status: confirmed
+    notes: User decision 2026-11-07. Masonry/casting skills apply only to this base, not to the oven kit (R-F1).
+    verification: [analysis, inspection]
+  - id: R-F5
+    title: Sealants and mortars
+    text: Ready-mixed refractory sealant/mortar (cartridge or tub) is allowed where it improves performance or durability and fits the budget. Use is justified per joint.
+    status: confirmed
+    notes: User has no experience with these; Claude chooses and explains.
+    verification: [inspection]
+
+  - id: R-F6
+    title: Fabrication services
+    text: Laser cutting/bending by a service in Romania is allowed if Phase 1 shows it is accessible and fits the budget. Otherwise, all steel parts must be makeable with angle grinder, jigsaw and drill.
+    status: confirmed
+    notes: Decision delegated to Claude (Phase 1).
+    verification: [inspection]
+
+  # ---------------- Cost and sourcing ----------------
+  - id: R-C1
+    title: Budget
+    text: Total oven material cost about 1000 USD (soft limit), including VAT and shipping. Excluded - the concrete base (R-F4), the roof (R-E1), and the measurement kit (thermocouples, logger), which is costed as a separate line.
+    values: {budget_USD: 1000}
+    status: confirmed
+    notes: Prices are recorded in RON/EUR as quoted and converted at a dated exchange rate.
+    verification: [analysis]
+
+  - id: R-C2
+    title: Sourcing region
+    text: Buyable in Romania or ordered online within the EU. Each BOM line names a specific product, supplier, price and the date checked.
+    status: confirmed
+    verification: [inspection]
+
+  - id: R-C3
+    title: Standard sizes
+    text: Prefer standard stock sizes (firebricks, sheet thicknesses, blanket rolls, boards).
+    status: confirmed
+    verification: [inspection]
+
+  # ---------------- Safety ----------------
+  - id: R-S1
+    title: Touch temperature
+    text: Touchable outer surfaces ≤ 60 °C target, checked against EN ISO 13732-1 contact-burn thresholds for the actual surface material and contact time. Zones that cannot meet this (door, flue) are named, guarded and labelled.
+    values: {T_touch_target_C: 60}
+    status: confirmed
+    verification: [analysis, test]
+
+  - id: R-S2
+    title: Carbon monoxide and smoke
+    text: Outdoor use only. Flue and door geometry carry smoke away from the operator. The manual forbids use in enclosed or roofed-and-walled spaces.
+    status: confirmed
+    verification: [analysis, inspection]
+
+  - id: R-S3
+    title: Fire spread
+    text: Specified clearances to combustibles. The base or underside stays below a safe temperature for whatever support R-F4 settles on.
+    status: confirmed
+    verification: [analysis, test]
+
+  - id: R-S4
+    title: Structural safety
+    text: Stable on its base, tip-over checked, sheet edges deburred or hemmed, heavy parts have safe lifting points.
+    status: confirmed
+    verification: [analysis, inspection]
+
+  - id: R-S5
+    title: Hazardous materials
+    text: No galvanized, zinc-plated, painted or coated steel above its coating's rated temperature. Bio-soluble (AES) fibre instead of refractory ceramic fibre (RCF, Carc. 1B in the EU). All fibre fully enclosed, never exposed to the cooking chamber or gas flow.
+    status: confirmed
+    verification: [inspection]
+
+  - id: R-S6
+    title: Food contact
+    text: Cooking floor is a material suitable for direct food contact. No unknown castables or binders on the floor surface.
+    status: confirmed
+    verification: [inspection]
+
+  - id: R-S7
+    title: Cracking and spalling
+    text: Expansion joints designed in. A documented drying procedure after rain, winter storage or long idle periods.
+    status: confirmed
+    verification: [analysis, test]
+
+  # ---------------- Environment ----------------
+  - id: R-E1
+    title: Weather exposure
+    text: The oven sits under a roof that is a separate project (out of scope). The oven shell is not designed for direct rain, but must tolerate humidity, condensation, wind-driven splash and outdoor winter air.
+    status: confirmed
+    notes: User decision 2026-11-07. See R-I1 for the roof interface.
+    verification: [inspection, test]
+  - id: R-E2
+    title: Winter survival (not in use)
+    text: Survives unfired outdoor winter storage under the roof at the build site in Romania, including freeze/thaw cycles, down to the local winter minimum taken from sourced climate data.
+    status: confirmed
+    values: {T_record_low_C: -35.3, T_jan_mean_min_C: -3.0}
+    notes: Location given by user 2026-11-07. Values from NOAA / Romanian National Institute of Statistics data for the nearest station (withheld), see docs/research/02. Design for frequent freeze/thaw around -3 C and survival at the record low, unfired and dry.
+    verification: [analysis, inspection]
+  - id: R-E3
+    title: Operating ambient
+    text: Operated at -5 °C to +40 °C ambient. Performance (R-P1, R-P2) is reported at 10 °C and checked at -5 °C. Touch temperature (R-S1) is checked at +40 °C.
+    values: {T_amb_min_C: -5, T_amb_max_C: 40, T_amb_nominal_C: 10}
+    status: confirmed
+    notes: Approved by user 2026-11-07.
+    verification: [analysis]
+
+  # ---------------- Interfaces ----------------
+  - id: R-I1
+    title: Roof interface
+    text: The oven design publishes what the separate roof project needs - flue exit position and height, flue outer temperature, clearance to combustible roof parts, spark protection, and the oven envelope.
+    status: confirmed
+    verification: [analysis, inspection]
+
+  - id: R-I2
+    title: Concrete base interface
+    text: The oven design publishes what the user needs to build the base - plan dimensions, top height, total load and load points, anchor positions, and the insulation that keeps the concrete below its temperature limit.
+    values: {T_concrete_max_C: 100}
+    notes: The 100 C limit is an ASSUMPTION pending an authorised EN 1992-1-2. Floor insulation 125 mm CaSi (5 layers; Phase 3 decision 0005).
+    status: confirmed
+    verification: [analysis, inspection]

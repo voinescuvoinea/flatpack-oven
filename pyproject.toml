@@ -1,0 +1,24 @@
+[project]
+name = "flatpack-oven"
+version = "0.0.1"
+description = "Flat-pack wood-fired oven: requirements, materials, parametric CAD, thermal simulation"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "cadquery==2.8.0",
+    "coolprop==8.0.0",
+    "ezdxf==1.4.5",
+    "matplotlib==3.11.2",
+    "numpy==2.5.4",
+    "pint==0.26.2",
+    "pyyaml==6.0.3",
+    "scipy==1.18.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+]
